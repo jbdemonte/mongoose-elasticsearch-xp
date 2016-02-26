@@ -245,4 +245,4 @@ If the mapping already exists, an Exception detailing such will be populated in 
 [travis-image]: https://secure.travis-ci.org/jbdemonte/mongoose-elasticsearch-xp.png?branch=master
 
 [coverage-url]: https://coveralls.io/github/jbdemonte/mongoose-elasticsearch-xp?branch=master
-[coverage-image]: https://coveralls.io/repos/jbdemonte/mongoose-elasticsearch-xp/badge.svg?branch=master&service=github
+[coverage-image]: https://coveralls.io/repos/github/jbdemonte/mongoose-elasticsearch-xp/badge.svg?branch=master
