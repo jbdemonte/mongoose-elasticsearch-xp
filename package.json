@@ -1,0 +1,30 @@
+{
+  "name": "mongoose-elasticsearch-xp",
+  "version": "1.0.0",
+  "description": "A mongoose plugin that indexes models into elastic search (an alternative to mongoosastic)",
+  "tags": [
+    "mongodb",
+    "mongoose",
+    "elasticsearch",
+    "elastic search",
+    "mongoosastic",
+    "auto index",
+    "full text search",
+    "promise"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
+  },
+  "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "elasticsearch": "^10.1.3",
+    "mongoose": "^4.4.4"
+  },
+  "devDependencies": {
+    "bluebird": "^3.3.1",
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5"
+  }
+}
