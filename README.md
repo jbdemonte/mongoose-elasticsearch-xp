@@ -1,5 +1,7 @@
 # mongoose-elasticsearch-xp
 
+[![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][coverage-image]][coverage-url]
+
 mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that can automatically index your models into [elasticsearch](http://www.elasticsearch.org/).
 
 
@@ -234,3 +236,13 @@ User
 
 You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping. 
 If the mapping already exists, an Exception detailing such will be populated in the `err` argument. 
+
+
+[npm-url]: https://npmjs.org/package/mongoose-elasticsearch-xp
+[npm-image]: https://badge.fury.io/js/mongoose-elasticsearch-xp.svg
+
+[travis-url]: http://travis-ci.org/jbdemonte/mongoose-elasticsearch-xp
+[travis-image]: https://secure.travis-ci.org/jbdemonte/mongoose-elasticsearch-xp.png?branch=master
+
+[coverage-url]: https://coveralls.io/github/jbdemonte/mongoose-elasticsearch-xp?branch=master
+[coverage-image]: https://coveralls.io/repos/jbdemonte/mongoose-elasticsearch-xp/badge.svg?branch=master&service=github

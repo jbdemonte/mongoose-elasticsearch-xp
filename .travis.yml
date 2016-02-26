@@ -8,3 +8,5 @@ services:
   - mongodb
   - elasticsearch
 
+script: "npm run-script test-covered"
+after_script: "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
