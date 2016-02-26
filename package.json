@@ -12,6 +12,10 @@
     "full text search",
     "promise"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jbdemonte/mongoose-elasticsearch-xp.git"
+  },
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha"
