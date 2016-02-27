@@ -143,4 +143,52 @@ describe("model-mapping", function () {
       });
   });
 
+  it('should propagate es options', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      name: {type: String, es_boost: 2},
+      age: {type: Number, es_type: 'integer'},
+      joined: Date,
+      optin: {type: Boolean, default: true},
+      pos: {
+        type: [Number],
+        index: '2dsphere',
+        es_type: 'geo_point',
+        es_boost: 1.5
+      }
+    });
+
+    UserSchema.plugin(plugin);
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        var options = UserModel.esOptions();
+        return options.client.indices.getMapping({
+          index: options.index,
+          type: options.type
+        });
+      })
+      .then(function (mapping) {
+        var properties = mapping.users.mappings.user.properties;
+        expect(properties).to.have.all.keys('name', 'age', 'joined', 'optin', 'pos');
+        expect(properties.name.type).to.be.equal('string');
+        expect(properties.name.boost).to.be.equal(2);
+        expect(properties.age.type).to.be.equal('integer');
+        expect(properties.joined.type).to.be.equal('date');
+        expect(properties.optin.type).to.be.equal('boolean');
+        expect(properties.pos.type).to.be.equal('geo_point');
+        expect(properties.pos.boost).to.be.equal(1.5);
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
 });

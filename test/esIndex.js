@@ -10,14 +10,20 @@ describe("esIndex", function () {
 
     var UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
+      pos: {
+        type: [Number],
+        index: '2dsphere',
+        es_type: 'geo_point',
+        es_boost: 1.5
+      }
     });
 
     UserSchema.plugin(plugin);
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({name: 'John', age: 35});
+    var john = new UserModel({name: 'John', age: 35, pos: [5.7333, 43.5]});
 
     utils.deleteModelIndexes(UserModel)
       .then(function () {
@@ -36,7 +42,7 @@ describe("esIndex", function () {
           expect(resp.hits.total).to.eql(1);
           var hit = resp.hits.hits[0];
           expect(hit._id).to.eql(john._id.toString());
-          expect(hit._source).to.eql({name: 'John', age: 35});
+          expect(hit._source).to.eql({name: 'John', age: 35, pos: [5.7333, 43.5]});
           done();
         });
       })
