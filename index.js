@@ -2,6 +2,7 @@ var generateMapping = require('./lib/mapping').generate;
 var client = require('./lib/client');
 var utils = require('./lib/utils');
 var Bulker = require('./lib/bulker');
+var mongoose = require('mongoose');
 
 
 module.exports = function (schema, options) {
@@ -146,7 +147,8 @@ function search(query, options, callback) {
   query = query || {};
   options = options || {};
 
-  var esOptions = this.esOptions();
+  var self = this;
+  var esOptions = self.esOptions();
   var params = {
     index: esOptions.index,
     type: esOptions.type
@@ -158,7 +160,51 @@ function search(query, options, callback) {
   } else {
     params.body = query.query ? query : {query: query};
   }
-  esOptions.client.search(params, defer.callback);
+  if (options.hydrate) {
+    params._source = false;
+  }
+  esOptions.client.search(params, function (err, result) {
+    if (err) {
+      return defer.reject(err);
+    }
+    if (!options.hydrate) {
+      return defer.resolve(result);
+    }
+    if (!result.hits.total) {
+      return defer.resolve(result);
+    }
+
+    var ids = result.hits.hits.map(function (hit) {
+      return mongoose.Types.ObjectId(hit._id);
+    });
+
+    var hydrate = options.hydrate || {};
+    var select = hydrate.select || null;
+    var opts = hydrate.options || null;
+    var docsOnly = hydrate.docsOnly || false;
+
+
+    self.find({_id: {$in: ids}}, select, opts, function (err, users) {
+      if (err) {
+        return defer.reject(err);
+      }
+      var userByIds = {};
+      users.forEach(function (user) {
+        userByIds[user._id] = user;
+      });
+      if (docsOnly) {
+        result = ids.map(function (id) {
+          return userByIds[id];
+        });
+      } else {
+        result.hits.hits.forEach(function (hit) {
+          hit.doc = userByIds[hit._id];
+        });
+      }
+      return defer.resolve(result);
+    });
+
+  });
 
   return defer.promise;
 }
@@ -187,7 +233,7 @@ function synchronize(conditions, projection, options, callback) {
     options = null;
   }
 
-  var schema = this;
+  var model = this;
   var defer = utils.defer(callback);
   var esOptions = this.esOptions();
   var batch = esOptions.bulk && esOptions.bulk.batch ? esOptions.bulk.batch : 50;
@@ -202,7 +248,7 @@ function synchronize(conditions, projection, options, callback) {
   }
 
   function onError(err) {
-    schema.emit('es-bulk-error', err);
+    model.emit('es-bulk-error', err);
     if (streamClosed) {
       finalize();
     } else {
@@ -211,7 +257,7 @@ function synchronize(conditions, projection, options, callback) {
   }
 
   function onSent(len) {
-    schema.emit('es-bulk-sent', len);
+    model.emit('es-bulk-sent', len);
     if (streamClosed) {
       finalize();
     } else {
@@ -228,7 +274,7 @@ function synchronize(conditions, projection, options, callback) {
       {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
       utils.serialize(doc, esOptions.mapping)
     );
-    schema.emit('es-bulk-data', doc);
+    model.emit('es-bulk-data', doc);
     if (!sending) {
       stream.resume();
     }

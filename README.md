@@ -15,6 +15,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Indexing on demand](#indexing-on-demand)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
+- [Hydration](#hydration)
 
 ## Why this plugin?
 
@@ -44,6 +45,7 @@ Options are:
 * `port` - the port Elasticsearch is running on
 * `auth` - the authentication needed to reach Elasticsearch server. In the standard format of 'username:password'
 * `protocol` - the protocol the Elasticsearch server uses. Defaults to http
+* `hydrate` - whether or not to replace ES source by mongo document
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
@@ -294,6 +296,43 @@ User
 
 You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping. 
 If the mapping already exists, an Exception detailing such will be populated in the `err` argument. 
+
+## Hydration
+By default objects returned from performing a search will be the objects as is in Elasticsearch. 
+This is useful in cases where only what was indexed needs to be displayed (think a list of results) while the actual mongoose object contains the full data when viewing one of the results.
+
+However, if you want the results to be actual mongoose objects you can provide {hydrate:true} as the second argument to a search call.
+
+```javascript
+User
+  .esSearch({query_string: {query: "john"}}, {hydrate:true})
+  .then(function (results) {
+  // results here
+  });
+```
+
+To modify default hydratation, provide an object to `hydrate` instead of "true".
+`hydrate` accept {select: string, options: object, docsOnly: boolean}
+
+```javascript
+User
+  .esSearch({query_string: {query: "john"}}, {hydrate: {select: 'name age', options: {lean: true}}})
+  .then(function (results) {
+    // results here
+  });
+```
+
+When using hydration, `hits._source` is replaced by `hits.doc`.
+
+If you only want the models, instead of the complete ES results, use the option "docsOnly".
+
+```javascript
+User
+  .esSearch({query_string: {query: "john"}}, {hydrate: {select: 'name age', docsOnly; true}})
+  .then(function (users) {
+    // users is an array of User
+  });
+```
 
 
 [npm-url]: https://npmjs.org/package/mongoose-elasticsearch-xp
