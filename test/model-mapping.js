@@ -147,14 +147,13 @@ describe("model-mapping", function () {
 
     var UserSchema = new mongoose.Schema({
       name: {type: String, es_boost: 2},
-      age: {type: Number, es_type: 'integer'},
+      age: {type: Number, es_type: 'integer', es_boost: 1.5},
       joined: Date,
       optin: {type: Boolean, default: true},
       pos: {
         type: [Number],
         index: '2dsphere',
-        es_type: 'geo_point',
-        es_boost: 1.5
+        es_type: 'geo_point'
       }
     });
 
@@ -179,10 +178,10 @@ describe("model-mapping", function () {
         expect(properties.name.type).to.be.equal('string');
         expect(properties.name.boost).to.be.equal(2);
         expect(properties.age.type).to.be.equal('integer');
+        expect(properties.age.boost).to.be.equal(1.5);
         expect(properties.joined.type).to.be.equal('date');
         expect(properties.optin.type).to.be.equal('boolean');
         expect(properties.pos.type).to.be.equal('geo_point');
-        expect(properties.pos.boost).to.be.equal(1.5);
 
         done();
       })
