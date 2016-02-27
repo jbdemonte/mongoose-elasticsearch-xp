@@ -11,6 +11,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 - [Indexing](#indexing)
   - [Saving a document](#saving-a-document)
   - [Indexing nested models](#indexing-nested-models)
+  - [Indexing an existing collection](#indexing-an-existing-collection)
   - [Indexing on demand](#indexing-on-demand)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
@@ -65,8 +66,7 @@ So if you create a new User object and save it, you can see it by navigating to 
 (this assumes Elasticsearch is running locally on port 9200). 
 
 The default behavior is all fields get indexed into Elasticsearch. 
-This can be a little wasteful especially considering that the document is now just being duplicated between mongodb and 
-Elasticsearch so you should consider opting to index only certain fields by specifying `es_indexed` on the fields you want to store:
+This can be a little wasteful especially considering that the document is now just being duplicated between mongodb and Elasticsearch so you should consider opting to index only certain fields by specifying `es_indexed` on the fields you want to store:
 
 
 ```javascript
@@ -183,6 +183,48 @@ var User = new Schema({
 });
 
 User.plugin(mexp);
+```
+
+### Indexing An Existing Collection
+Already have a mongodb collection that you'd like to index using this plugin? 
+No problem! Simply call the `esSynchronise` method on your model to open a mongoose stream and start indexing documents individually.
+
+```javascript
+var BookSchema = new Schema({
+  title: String
+});
+BookSchema.plugin(mexp);
+
+var Book = mongoose.model('Book', BookSchema);
+
+Book.on('es-bulk-sent', function () {
+  console.log('buffer sent');
+});
+
+Book.on('es-bulk-data', function (doc) {
+  console.log('Adding ' + doc.title);
+});
+
+Book.on('es-bulk-error', function (err) {
+  console.error(err);
+});
+
+Book
+  .esSynchronize()
+  .then(function () {
+    console.log('end.');
+  });
+```
+
+`esSynchronise` use same parameters as [find](http://mongoosejs.com/docs/api.html#model_Model.find) method.
+It allows to synchronize a subset of documents, modifying the default projection...
+
+```javascript
+Book
+  .esSynchronize({author: 'Arthur C. Clarke'}, '+resume')
+  .then(function () {
+    console.log('end.');
+  });
 ```
 
 ### Indexing On Demand

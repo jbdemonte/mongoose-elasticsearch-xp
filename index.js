@@ -1,6 +1,7 @@
 var generateMapping = require('./lib/mapping').generate;
 var client = require('./lib/client');
 var utils = require('./lib/utils');
+var Bulker = require('./lib/bulker');
 
 
 module.exports = function (schema, options) {
@@ -24,6 +25,10 @@ module.exports = function (schema, options) {
       options.client = client(options);
     }
 
+    if (options.bulk) {
+      options.bulker = new Bulker(options.client, options.bulk);
+    }
+
     if (!options.mapping) {
       options.mapping = Object.freeze({
         properties: generateMapping(this.schema)
@@ -37,6 +42,7 @@ module.exports = function (schema, options) {
   schema.statics.esCreateMapping = createMapping;
   schema.statics.esRefresh = refresh;
   schema.statics.esSearch = search;
+  schema.statics.esSynchronize = synchronize;
 
   schema.methods.esIndex = indexDoc;
   schema.methods.esRemove = removeDoc;
@@ -113,7 +119,7 @@ function createMapping(settings, callback) {
  * @returns {Promise|undefined}
  */
 function refresh(callback) {
-  var esOptions = this.schema.statics.esOptions();
+  var esOptions = this.esOptions();
   var defer = utils.defer(callback);
   esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, defer.callback);
   return defer.promise;
@@ -140,7 +146,7 @@ function search(query, options, callback) {
   query = query || {};
   options = options || {};
 
-  var esOptions = this.schema.statics.esOptions();
+  var esOptions = this.esOptions();
   var params = {
     index: esOptions.index,
     type: esOptions.type
@@ -153,6 +159,89 @@ function search(query, options, callback) {
     params.body = query.query ? query : {query: query};
   }
   esOptions.client.search(params, defer.callback);
+
+  return defer.promise;
+}
+
+/**
+ * Synchronize the collection with ElasticSearch
+ * static function
+ * @param {Object} [conditions]
+ * @param {String} [projection]
+ * @param {Object} [options]
+ * @param {Function} [callback]
+ * @returns {Promise|undefined}
+ */
+function synchronize(conditions, projection, options, callback) {
+  if (typeof conditions === 'function') {
+    callback = conditions;
+    conditions = {};
+    projection = null;
+    options = null;
+  } else if (typeof projection === 'function') {
+    callback = projection;
+    projection = null;
+    options = null;
+  } else if (typeof options === 'function') {
+    callback = options;
+    options = null;
+  }
+
+  var schema = this;
+  var defer = utils.defer(callback);
+  var esOptions = this.esOptions();
+  var batch = esOptions.bulk && esOptions.bulk.batch ? esOptions.bulk.batch : 50;
+  var stream = this.find(conditions || {}, projection, options).batchSize(batch).stream();
+  var bulker = esOptions.bulker || new Bulker(esOptions.client);
+  var streamClosed = false;
+
+  function finalize() {
+    bulker.removeListener('error', onError);
+    bulker.removeListener('sent', onSent);
+    esOptions.client.indices.refresh({index: esOptions.index}, defer.callback);
+  }
+
+  function onError(err) {
+    schema.emit('es-bulk-error', err);
+    if (streamClosed) {
+      finalize();
+    } else {
+      stream.resume();
+    }
+  }
+
+  function onSent(len) {
+    schema.emit('es-bulk-sent', len);
+    if (streamClosed) {
+      finalize();
+    } else {
+      stream.resume();
+    }
+  }
+
+  bulker.on('error', onError);
+  bulker.on('sent', onSent);
+
+  stream.on('data', function (doc) {
+    stream.pause();
+    var sending = bulker.push(
+      {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
+      utils.serialize(doc, esOptions.mapping)
+    );
+    schema.emit('es-bulk-data', doc);
+    if (!sending) {
+      stream.resume();
+    }
+  });
+
+  stream.on('close', function () {
+    streamClosed = true;
+    if (bulker.filled()) {
+      bulker.flush();
+    } else {
+      finalize();
+    }
+  });
 
   return defer.promise;
 }
