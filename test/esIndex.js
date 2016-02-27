@@ -6,7 +6,7 @@ describe("esIndex", function () {
 
   utils.setup();
 
-  it('should be removed', function (done) {
+  it('should be indexed', function (done) {
 
     var UserSchema = new mongoose.Schema({
       name: String,
