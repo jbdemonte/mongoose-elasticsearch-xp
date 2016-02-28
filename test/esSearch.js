@@ -119,4 +119,14 @@ describe("esSearch", function () {
       });
   });
 
+  it('should handle callback only', function (done) {
+    // useless but neede to code coverage
+    var self = this;
+    self.model
+      .esSearch(function (err, result) {
+        expect(result.hits.total).to.eql(0);
+        done();
+      });
+  });
+
 });
