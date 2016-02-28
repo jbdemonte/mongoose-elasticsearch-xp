@@ -129,17 +129,12 @@ function refresh(callback) {
 /**
  * Perform a search query on ElasticSearch
  * static function
- * @param {Object|string} [query]
+ * @param {Object|string} query
  * @param {Object} [options]
  * @param {Function} [callback]
  * @returns {Promise|undefined}
  */
 function search(query, options, callback) {
-  if (typeof query === 'function') {
-    callback = query;
-    options = {};
-    query = {};
-  }
   if (typeof options === 'function') {
     callback = options;
     options = {};
