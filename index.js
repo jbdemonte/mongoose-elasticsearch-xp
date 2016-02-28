@@ -149,6 +149,8 @@ function search(query, options, callback) {
 
   var self = this;
   var esOptions = self.esOptions();
+  var hydrate = options.hydrate === false ? false : options.hydrate || esOptions.hydrate;
+
   var params = {
     index: esOptions.index,
     type: esOptions.type
@@ -160,14 +162,14 @@ function search(query, options, callback) {
   } else {
     params.body = query.query ? query : {query: query};
   }
-  if (options.hydrate) {
+  if (hydrate) {
     params._source = false;
   }
   esOptions.client.search(params, function (err, result) {
     if (err) {
       return defer.reject(err);
     }
-    if (!options.hydrate) {
+    if (!hydrate) {
       return defer.resolve(result);
     }
     if (!result.hits.total) {
@@ -178,7 +180,6 @@ function search(query, options, callback) {
       return mongoose.Types.ObjectId(hit._id);
     });
 
-    var hydrate = options.hydrate || {};
     var select = hydrate.select || null;
     var opts = hydrate.options || null;
     var docsOnly = hydrate.docsOnly || false;

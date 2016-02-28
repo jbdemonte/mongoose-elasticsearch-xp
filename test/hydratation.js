@@ -48,7 +48,7 @@ describe("hydratation", function () {
       });
   });
 
-  it('should hydrate results', function (done) {
+  it('should hydrate', function (done) {
 
     var UserModel = this.model;
     var john = this.users.john;
@@ -184,6 +184,262 @@ describe("hydratation", function () {
     .catch(function (err) {
       done(err);
     });
+  });
+
+  it('should hydrate when defined in plugin', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: true});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel
+
+    .esSearch('name:jane')
+    .then(function (result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
+
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.eql(jane.age);
+
+      done();
+    })
+    .catch(function (err) {
+      done(err);
+    });
+  });
+
+  it('should hydrate when defined in plugin returning only models', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: {docsOnly: true}});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var john = this.users.john;
+    var bob = this.users.bob;
+
+    UserModel
+      .esSearch(
+      {
+        query: {match_all: {}},
+        sort: [
+          {age: {order: "desc"}}
+        ],
+        filter: {range: {age: {gte: 35}}}
+      }
+    )
+      .then(function (users) {
+        var user;
+        expect(users.length).to.eql(2);
+
+        user = users[0];
+        expect(user._id.toString()).to.eql(bob._id.toString());
+        expect(user.name).to.eql(bob.name);
+        expect(user.age).to.eql(bob.age);
+
+        user = users[1];
+        expect(user._id.toString()).to.eql(john._id.toString());
+        expect(user.name).to.eql(john.name);
+        expect(user.age).to.eql(john.age);
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
+  it('should hydrate when defined in plugin using projection', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: {select: 'name'}});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel
+
+      .esSearch('name:jane')
+      .then(function (result) {
+        var hit;
+        expect(result.hits.total).to.eql(1);
+
+        hit = result.hits.hits[0];
+        expect(hit._source).to.be.undefined;
+        expect(hit.doc).to.be.an.instanceof(UserModel);
+        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+        expect(hit.doc.name).to.eql(jane.name);
+        expect(hit.doc.age).to.be.undefined;
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
+  it('should hydrate when defined in plugin using options', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: {options: {lean: true}}});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel
+
+      .esSearch('name:jane')
+      .then(function (result) {
+        var hit;
+        expect(result.hits.total).to.eql(1);
+
+        hit = result.hits.hits[0];
+        expect(hit._source).to.be.undefined;
+        expect(hit.doc).not.to.be.an.instanceof(UserModel);
+        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+        expect(hit.doc.name).to.eql(jane.name);
+        expect(hit.doc.age).to.eql(jane.age);
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
+  it('should hydrate overwriting defined in plugin using options', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: {options: {lean: true}}});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel
+
+      .esSearch(
+        'name:jane',
+        {hydrate: {select: 'name'}} // not lean
+      )
+      .then(function (result) {
+        var hit;
+        expect(result.hits.total).to.eql(1);
+
+        hit = result.hits.hits[0];
+        expect(hit._source).to.be.undefined;
+        expect(hit.doc).to.be.an.instanceof(UserModel);
+        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+        expect(hit.doc.name).to.eql(jane.name);
+        expect(hit.doc.age).to.be.undefined;
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
+  it('should not hydrate overwriting defined in plugin', function (done) {
+
+    // delete beforeEach model
+    Object.keys(mongoose.models).forEach(function (name) {
+      delete mongoose.models[name];
+      delete mongoose.modelSchemas[name];
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin, {hydrate: {options: {lean: true}}});
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel
+
+      .esSearch(
+        'name:jane',
+        {hydrate: false} // not lean
+      )
+      .then(function (result) {
+        var hit;
+        expect(result.hits.total).to.eql(1);
+
+        hit = result.hits.hits[0];
+        expect(hit.doc).to.be.undefined;
+        expect(hit._source).not.to.be.undefined;
+        expect(hit._source.name).to.eql(jane.name);
+        expect(hit._source.age).to.eql(34);
+
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
   });
 
 });
