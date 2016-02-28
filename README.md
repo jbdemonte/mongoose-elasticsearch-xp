@@ -102,16 +102,6 @@ The `esSearch` also handle the full Elasticsearch ...
 
 ```javascript
 User
-  .esSearch("name:john")
-  .then(function(results) {
-    // results here
-  });
-```
-
-... and Lucene syntax:
-
-```javascript
-User
   .esSearch({
     query: {
       match_all: {}
@@ -122,6 +112,15 @@ User
       }
     }
   })
+  .then(function(results) {
+    // results here
+  });
+```
+... and Lucene syntax:
+
+```javascript
+User
+  .esSearch("name:john")
   .then(function(results) {
     // results here
   });
