@@ -190,4 +190,128 @@ describe("model-mapping", function () {
       });
   });
 
+  // https://www.elastic.co/guide/en/elasticsearch/reference/2.0/nested.html
+  it('should handle nested datatype', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      _id: false,
+      first: String,
+      last: String
+    });
+
+    var GroupSchema = new mongoose.Schema({
+      group: String,
+      user: {type: [UserSchema], es_type: 'nested'}
+    });
+
+    GroupSchema.plugin(plugin);
+
+    var GroupModel = mongoose.model('Group', GroupSchema);
+
+    utils.deleteModelIndexes(GroupModel)
+      .then(function () {
+        return GroupModel.esCreateMapping();
+      })
+      .then(function () {
+        var options = GroupModel.esOptions();
+        return options.client.indices.getMapping({
+          index: options.index,
+          type: options.type
+        });
+      })
+      .then(function (mapping) {
+        var properties = mapping.groups.mappings.group.properties;
+        expect(properties).to.have.all.keys('group', 'user');
+        expect(properties.group.type).to.be.equal('string');
+        expect(properties.user.type).to.be.equal('nested');
+        expect(properties.user.properties).to.have.all.keys('first', 'last');
+        expect(properties.user.properties.first.type).to.be.equal('string');
+        expect(properties.user.properties.last.type).to.be.equal('string');
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+          var group = new GroupModel({
+            "group": "fans",
+            "user": [
+              {
+                "first": "John",
+                "last": "Smith"
+              },
+              {
+                "first": "Alice",
+                "last": "White"
+              }
+            ]
+          });
+          group.on('es-indexed', function () {
+            resolve();
+          });
+          return group.save();
+        });
+      })
+      .then(function () {
+        return GroupModel.esRefresh();
+      })
+      .then(function () {
+        return GroupModel
+          .esSearch({
+            "query": {
+              "nested": {
+                "path": "user",
+                "query": {
+                  "bool": {
+                    "must": [
+                      { "match": { "user.first": "Alice" }},
+                      { "match": { "user.last":  "Smith" }}
+                    ]
+                  }
+                }
+              }
+            }
+          })
+          .then(function (result) {
+            expect(result.hits.total).to.eql(0);
+          });
+      })
+      .then(function () {
+        return GroupModel
+          .esSearch({
+            "query": {
+              "nested": {
+                "path": "user",
+                "query": {
+                  "bool": {
+                    "must": [
+                      { "match": { "user.first": "Alice" }},
+                      { "match": { "user.last":  "White" }}
+                    ]
+                  }
+                }
+              }
+            }
+          })
+          .then(function (result) {
+            expect(result.hits.total).to.eql(1);
+            expect(result.hits.hits[0]._source).to.eql({
+              "group": "fans",
+              "user": [
+                {
+                  "first": "John",
+                  "last": "Smith"
+                },
+                {
+                  "first": "Alice",
+                  "last": "White"
+                }
+              ]
+            });
+          });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
 });
