@@ -188,11 +188,7 @@ describe("hydratation", function () {
 
   it('should hydrate when defined in plugin', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,
@@ -228,11 +224,7 @@ describe("hydratation", function () {
 
   it('should hydrate when defined in plugin returning only models', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,
@@ -279,11 +271,7 @@ describe("hydratation", function () {
 
   it('should hydrate when defined in plugin using projection', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,
@@ -319,11 +307,7 @@ describe("hydratation", function () {
 
   it('should hydrate when defined in plugin using options', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,
@@ -359,11 +343,7 @@ describe("hydratation", function () {
 
   it('should hydrate overwriting defined in plugin using options', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,
@@ -402,11 +382,7 @@ describe("hydratation", function () {
 
   it('should not hydrate overwriting defined in plugin', function (done) {
 
-    // delete beforeEach model
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
       name: String,

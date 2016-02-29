@@ -5,7 +5,8 @@ mongoose.Promise = _Promise;
 module.exports = {
   Promise: _Promise,
   setup: setup,
-  deleteModelIndexes: deleteModelIndexes
+  deleteModelIndexes: deleteModelIndexes,
+  deleteMongooseModels: deleteMongooseModels
 };
 
 function array(mixed) {
@@ -20,10 +21,7 @@ function setup() {
   });
 
   beforeEach(function () {
-    Object.keys(mongoose.models).forEach(function (name) {
-      delete mongoose.models[name];
-      delete mongoose.modelSchemas[name];
-    });
+    deleteMongooseModels();
   });
 
   after(function (done) {
@@ -49,4 +47,11 @@ function deleteModelIndexes(models) {
     .then(function () {
       // do nothing, just remove the results to allows to use .then(done)
     });
+}
+
+function deleteMongooseModels() {
+  Object.keys(mongoose.models).forEach(function (name) {
+    delete mongoose.models[name];
+    delete mongoose.modelSchemas[name];
+  });
 }
