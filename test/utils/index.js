@@ -12,32 +12,6 @@ function array(mixed) {
   return Array.isArray(mixed) ? mixed : [mixed];
 }
 
-function test(description, fn) {
-  describe(description, function () {
-
-    before(function () {
-      global.expect = require('chai').expect;
-      mongoose.connect('mongodb://localhost/test');
-    });
-
-    beforeEach(function () {
-      Object.keys(mongoose.models).forEach(function (name) {
-        delete mongoose.models[name];
-        delete mongoose.modelSchemas[name];
-      });
-    });
-
-    after(function (done) {
-      mongoose.disconnect(function () {
-        done();
-      });
-    });
-
-    fn();
-
-  });
-}
-
 function setup() {
 
   before(function () {
