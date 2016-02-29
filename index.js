@@ -266,11 +266,16 @@ function synchronize(conditions, projection, options, callback) {
 
   stream.on('data', function (doc) {
     stream.pause();
-    var sending = bulker.push(
-      {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
-      utils.serialize(doc, esOptions.mapping)
-    );
-    model.emit('es-bulk-data', doc);
+    var sending;
+    if (!esOptions.filter || esOptions.filter(doc)) {
+      sending = bulker.push(
+        {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
+        utils.serialize(doc, esOptions.mapping)
+      );
+      model.emit('es-bulk-data', doc);
+    } else {
+      model.emit('es-bulk-filtered', doc);
+    }
     if (!sending) {
       stream.resume();
     }
@@ -362,9 +367,14 @@ function deleteByMongoId(options, document, callback, retry) {
  */
 function postSave(doc) {
   if (doc) {
-    doc.esIndex(function (err, res) {
-      doc.emit('es-indexed', err, res);
-    });
+    var esOptions = this.schema.statics.esOptions();
+    if (!esOptions.filter || esOptions.filter(doc)) {
+      doc.esIndex(function (err, res) {
+        doc.emit('es-indexed', err, res);
+      });
+    } else {
+      postRemove(doc);
+    }
   }
 }
 

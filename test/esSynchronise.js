@@ -599,4 +599,106 @@ describe("esSynchronise", function () {
       });
   });
 
+  it('should index filtering', function (done) {
+    this.timeout(5000);
+
+    var users = [];
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    UserModel.remove({}).exec()
+      .then(function () {
+        for (var i = 0; i < 100; i++) {
+          users.push({
+            _id: mongoose.Types.ObjectId(),
+            name: 'Bob' + i,
+            age: i
+          });
+        }
+        return UserModel.insertMany(users);
+      })
+      .then(function () {
+        var UserPluginSchema = new mongoose.Schema({
+          name: String,
+          age: Number
+        });
+
+        UserPluginSchema.plugin(plugin, {index: 'users', type: 'user', filter: function (doc) {
+          return doc.age >= 80;
+        }});
+
+        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+
+        return utils.deleteModelIndexes(UserPluginModel)
+          .then(function () {
+            return UserPluginModel.esCreateMapping();
+          })
+          .then(function () {
+            return UserPluginModel;
+          });
+      })
+
+      .then(function (UserPluginModel) {
+        var error = 0;
+        var docSent = 0;
+        var docFiltered = 0;
+
+        UserPluginModel.on('es-bulk-error', function () {
+          error++;
+        });
+
+        UserPluginModel.on('es-bulk-data', function () {
+          docSent++;
+        });
+
+        UserPluginModel.on('es-bulk-filtered', function () {
+          docFiltered++;
+        });
+
+        return UserPluginModel
+          .esSynchronize()
+          .then(function () {
+            expect(error).to.be.equal(0);
+            expect(docSent).to.be.equal(20);
+            expect(docFiltered).to.be.equal(80);
+            return UserPluginModel;
+          });
+      })
+      .then(function (UserPluginModel) {
+        return utils.Promise.all(
+          users.map(function (user) {
+            return new utils.Promise(function (resolve, reject) {
+              UserPluginModel
+                .esSearch({match: {_id: user._id.toString()}})
+                .then(function (result) {
+                  if (user.age < 80) {
+                    expect(result.hits.total).to.eql(0);
+                  } else {
+                    expect(result.hits.total).to.eql(1);
+                    var hit = result.hits.hits[0];
+                    expect(hit._source.name).to.be.equal(user.name);
+                    expect(hit._source.age).to.be.equal(user.age);
+                  }
+                  resolve();
+                })
+                .catch(function (err) {
+                  reject(err);
+                });
+            });
+          })
+        );
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
 });

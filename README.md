@@ -12,6 +12,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Saving a document](#saving-a-document)
   - [Indexing nested models](#indexing-nested-models)
   - [Indexing an existing collection](#indexing-an-existing-collection)
+  - [Filtered indexing](#filtered-indexing)
   - [Indexing on demand](#indexing-on-demand)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
@@ -46,6 +47,7 @@ Options are:
 * `auth` - the authentication needed to reach Elasticsearch server. In the standard format of 'username:password'
 * `protocol` - the protocol the Elasticsearch server uses. Defaults to http
 * `hydrate` - whether or not to replace ES source by mongo document
+* `filter` - the function used for filtered indexing
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
@@ -227,6 +229,27 @@ Book
     console.log('end.');
   });
 ```
+
+### Filtered Indexing
+
+You can specify a filter function to index a model to Elasticsearch based on some specific conditions.
+
+Filtering function must return True for conditions that will be indexing to Elasticsearch (like Array.filter & unlike moogoosastic.filter)
+
+```javascript
+var MovieSchema = new Schema({
+  title: {type: String},
+  genre: {type: String, enum: ['horror', 'action', 'adventure', 'other']}
+});
+
+MovieSchema.plugin(mongoosastic, {
+  filter: function(doc) {
+    return doc.genre === 'action';
+  }
+});
+```
+
+Instances of Movie model having 'action' as their genre will be indexed to Elasticsearch.
 
 ### Indexing On Demand
 You can do on-demand indexes using the `esIndex` function
