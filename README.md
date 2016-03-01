@@ -17,6 +17,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Hydration](#hydration)
+- [Getting only Ids](#getting-only-ids)
 - [Refreshing model index](#refreshing-model-index)
 
 ## Why this plugin?
@@ -49,6 +50,7 @@ Options are:
 * `protocol` - the protocol the Elasticsearch server uses. Defaults to http
 * `hydrate` - whether or not to replace ES source by mongo document
 * `filter` - the function used for filtered indexing
+* `idsOnly` - whether or not returning only mongo ids
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
@@ -354,6 +356,18 @@ User
   .esSearch({query_string: {query: "john"}}, {hydrate: {select: 'name age', docsOnly; true}})
   .then(function (users) {
     // users is an array of User
+  });
+```
+
+## Getting only Ids
+A variant to hydration may be to get only ids instead of the complete Elasticsearch result. 
+Using `idsOnly` will return the ids cast in mongoose ObjectIds.
+
+```javascript
+User
+  .esSearch({query_string: {query: "john"}}, {idsOnly: true})
+  .then(function (ids) {
+  // ids is an array of mongo id
   });
 ```
 

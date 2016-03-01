@@ -145,6 +145,7 @@ function search(query, options, callback) {
   var self = this;
   var esOptions = self.esOptions();
   var hydrate = options.hydrate === false ? false : options.hydrate || esOptions.hydrate;
+  var idsOnly = options.idsOnly === false ? false : options.idsOnly || esOptions.idsOnly;
 
   var params = {
     index: esOptions.index,
@@ -164,8 +165,17 @@ function search(query, options, callback) {
     if (err) {
       return defer.reject(err);
     }
-    if (!hydrate) {
+
+    if (!hydrate && !idsOnly) {
       return defer.resolve(result);
+    }
+
+    var ids = result.hits.hits.map(function (hit) {
+      return mongoose.Types.ObjectId(hit._id);
+    });
+
+    if (idsOnly) {
+      return defer.resolve(ids);
     }
 
     var select = hydrate.select || null;
@@ -175,10 +185,6 @@ function search(query, options, callback) {
     if (!result.hits.total) {
       return defer.resolve(docsOnly ? [] : result);
     }
-
-    var ids = result.hits.hits.map(function (hit) {
-      return mongoose.Types.ObjectId(hit._id);
-    });
 
 
     self.find({_id: {$in: ids}}, select, opts, function (err, users) {
