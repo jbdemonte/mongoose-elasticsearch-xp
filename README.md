@@ -5,6 +5,7 @@
 mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that can automatically index your models into [elasticsearch](http://www.elasticsearch.org/).
 
 
+- [Prerequisite](#prerequisite)
 - [Why this plugin?](#why-this-plugin)
 - [Installation](#installation)
 - [Setup](#setup)
@@ -19,6 +20,10 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 - [Hydration](#hydration)
 - [Getting only Ids](#getting-only-ids)
 - [Refreshing model index](#refreshing-model-index)
+
+## Prerequisite
+
+mongoose-elasticsearch-xp requires mongoose 4.2.2 or later.
 
 ## Why this plugin?
 
@@ -157,7 +162,8 @@ MyModel.plugin(mexp, {
 
 ### Saving a document
 The indexing takes place after saving inside the mongodb and is a defered process. 
-One can check the end of the indexion catching es-indexed event. 
+One can check the end of the indexion catching `es-indexed` event. 
+This event is emitted both from the document and the model (which make unit tests easier).
 
 ```javascript
 doc.save(function (err) {

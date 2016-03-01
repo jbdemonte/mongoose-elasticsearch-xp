@@ -378,6 +378,7 @@ function postSave(doc) {
     if (!esOptions.filter || esOptions.filter(doc)) {
       doc.esIndex(function (err, res) {
         doc.emit('es-indexed', err, res);
+        doc.constructor.emit('es-indexed', err, res);
       });
     } else {
       postRemove(doc);
@@ -394,6 +395,7 @@ function postRemove(doc) {
   if (doc) {
     doc.esRemove(function (err, res) {
       doc.emit('es-removed', err, res);
+      doc.constructor.emit('es-removed', err, res);
     });
   }
 }

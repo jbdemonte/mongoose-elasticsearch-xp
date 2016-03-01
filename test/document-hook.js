@@ -80,6 +80,76 @@ describe("document-hook", function () {
       });
   });
 
+  it('should emit same event from model', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin);
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var john = new UserModel({name: 'John', age: 35});
+    var jane = new UserModel({name: 'Jane', age: 34});
+    var bob = new UserModel({name: 'Bob', age: 36});
+    var users = [john, jane, bob];
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        var count = 0;
+        return new utils.Promise(function (resolve, reject) {
+          UserModel.on('es-indexed', function (err) {
+            if (err) {
+              return reject(err);
+            }
+            count++;
+            if (count === 3) {
+              setTimeout(function () { // delay to check if more than 3 are received
+                resolve();
+              }, 500);
+            } else if (count > 3) {
+              reject(new Error('more than 3 event were emitted'));
+            }
+          });
+          users.forEach(function (user) {
+            user.save();
+          });
+        });
+      })
+      .then(function () {
+        var count = 0;
+        return new utils.Promise(function (resolve, reject) {
+          UserModel.on('es-removed', function (err) {
+            if (err) {
+              return reject(err);
+            }
+            count++;
+            if (count === 3) {
+              setTimeout(function () { // delay to check if more than 3 are received
+                resolve();
+              }, 500);
+            } else if (count > 3) {
+              reject(new Error('more than 3 event were emitted'));
+            }
+          });
+          users.forEach(function (user) {
+            user.remove();
+          });
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
   it('should use filter', function (done) {
 
     var UserSchema = new mongoose.Schema({
