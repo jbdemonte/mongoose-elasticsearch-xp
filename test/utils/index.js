@@ -15,9 +15,15 @@ function array(mixed) {
 
 function setup() {
 
-  before(function () {
+  before(function (done) {
     global.expect = require('chai').expect;
-    mongoose.connect('mongodb://localhost/test');
+    mongoose.connect('mongodb://localhost/test', function (err) {
+      if (err) {
+        done(err);
+      } else {
+        done();
+      }
+    });
   });
 
   beforeEach(function () {
