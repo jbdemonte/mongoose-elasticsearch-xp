@@ -119,4 +119,14 @@ describe("esSearch", function () {
       });
   });
 
+  it('should handle 0 hit', function (done) {
+    var self = this;
+    self.model
+      .esSearch({match: {age: 100}})
+      .then(function (result) {
+        expect(result.hits.total).to.eql(0);
+        done();
+      });
+  });
+
 });

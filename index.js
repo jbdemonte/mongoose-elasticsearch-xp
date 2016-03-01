@@ -167,17 +167,18 @@ function search(query, options, callback) {
     if (!hydrate) {
       return defer.resolve(result);
     }
+
+    var select = hydrate.select || null;
+    var opts = hydrate.options || null;
+    var docsOnly = hydrate.docsOnly || false;
+
     if (!result.hits.total) {
-      return defer.resolve(result);
+      return defer.resolve(docsOnly ? [] : result);
     }
 
     var ids = result.hits.hits.map(function (hit) {
       return mongoose.Types.ObjectId(hit._id);
     });
-
-    var select = hydrate.select || null;
-    var opts = hydrate.options || null;
-    var docsOnly = hydrate.docsOnly || false;
 
 
     self.find({_id: {$in: ids}}, select, opts, function (err, users) {

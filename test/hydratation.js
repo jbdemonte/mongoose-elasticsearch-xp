@@ -128,6 +128,31 @@ describe("hydratation", function () {
       });
   });
 
+  it('should return an empty array when hydrating only models on 0 hit', function (done) {
+
+    var UserModel = this.model;
+
+    UserModel
+      .esSearch(
+        {
+          query: {match_all: {}},
+          sort: [
+            {age: {order: "desc"}}
+          ],
+          filter: {range: {age: {gte: 100}}}
+        },
+        {hydrate: {docsOnly: true}}
+      )
+      .then(function (users) {
+        var user;
+        expect(users).to.eql([]);
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
   it('should hydrate using projection', function (done) {
 
     var UserModel = this.model;
