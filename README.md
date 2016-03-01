@@ -17,6 +17,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Hydration](#hydration)
+- [Refreshing model index](#refreshing-model-index)
 
 ## Why this plugin?
 
@@ -353,6 +354,17 @@ User
   .esSearch({query_string: {query: "john"}}, {hydrate: {select: 'name age', docsOnly; true}})
   .then(function (users) {
     // users is an array of User
+  });
+```
+
+## Refreshing model index
+`esRefresh` explicitly refresh the model index by calling [indices-refresh](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-refresh.html).
+
+```javascript
+User
+  .esRefresh()
+  .then(function () {
+    // index has been refreshed
   });
 ```
 
