@@ -31,7 +31,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -127,7 +127,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -223,7 +223,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -323,7 +323,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -422,7 +422,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -521,7 +521,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
@@ -620,7 +620,7 @@ describe("esSynchronise", function () {
             age: i
           });
         }
-        return UserModel.insertMany(users);
+        return UserModel.collection.insertMany(users);
       })
       .then(function () {
         var UserPluginSchema = new mongoose.Schema({
