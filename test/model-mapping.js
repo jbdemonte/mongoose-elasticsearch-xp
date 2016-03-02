@@ -6,6 +6,89 @@ describe("model-mapping", function () {
 
   utils.setup();
 
+  it('should handle plugin settings', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      name: String
+    });
+
+    UserSchema.plugin(
+      plugin,
+      {
+        mappingSettings: {
+          "analysis": {
+            "filter": {
+              "elision": {
+                "type": "elision",
+                "articles": ["l", "m", "t", "qu", "n", "s", "j", "d"]
+              }
+            },
+            "analyzer": {
+              "custom_french_analyzer": {
+                "tokenizer": "letter",
+                "filter": ["asciifolding", "lowercase", "french_stem", "elision", "stop"]
+              },
+              "tag_analyzer": {
+                "tokenizer": "keyword",
+                "filter": ["asciifolding", "lowercase"]
+              }
+            }
+          }
+        }
+      }
+    );
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        var options = UserModel.esOptions();
+        return options.client.indices.getSettings({
+          index: options.index
+        });
+      })
+      .then(function (settings) {
+        var analysis = settings.users.settings.index.analysis;
+        expect(analysis.analyzer).to.eql({
+          "custom_french_analyzer": {
+            "tokenizer": "letter",
+            "filter": ["asciifolding", "lowercase", "french_stem", "elision", "stop"]
+          },
+          "tag_analyzer": {
+            "tokenizer": "keyword",
+            "filter": ["asciifolding", "lowercase"]
+          }
+        });
+        expect(analysis.filter).to.eql({
+          "elision": {
+            "type": "elision",
+              "articles": ["l", "m", "t", "qu", "n", "s", "j", "d"]
+          }
+        });
+      })
+      .then(function () {
+        var options = UserModel.esOptions();
+        return options.client.indices.getMapping({
+          index: options.index,
+          type: options.type
+        });
+      })
+      .then(function (mapping) {
+        var properties = mapping.users.mappings.user.properties;
+        expect(properties).to.have.all.keys('name');
+        expect(properties.name.type).to.be.equal('string');
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
   it('should handle settings', function (done) {
 
     var UserSchema = new mongoose.Schema({

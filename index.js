@@ -66,13 +66,13 @@ module.exports = function (schema, options) {
 function createMapping(settings, callback) {
   if (typeof settings === 'function') {
     callback = settings;
-    settings = {};
-  } else {
-    settings = settings || {};
+    settings = null;
   }
 
   var defer = utils.defer(callback);
   var esOptions = this.esOptions();
+
+  settings = settings || esOptions.mappingSettings || {};
 
   var mapping = {};
   mapping[esOptions.type] = esOptions.mapping;
