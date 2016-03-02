@@ -64,9 +64,11 @@ module.exports = function (schema, options) {
  * @returns {Promise|undefined}
  */
 function createMapping(settings, callback) {
-  if (arguments.length < 2) {
+  if (typeof settings === 'function') {
     callback = settings;
     settings = {};
+  } else {
+    settings = settings || {};
   }
 
   var defer = utils.defer(callback);
