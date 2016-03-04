@@ -21,6 +21,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Hydration](#hydration)
   - [Getting only Ids](#getting-only-ids)
 - [Count](#count)
+  - [Getting only count value](#getting-only-count-value)
 - [Refreshing model index](#refreshing-model-index)
 
 ## Prerequisite
