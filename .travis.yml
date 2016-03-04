@@ -6,13 +6,11 @@ node_js:
 
 services:
   - mongodb
-  - elasticsearch
 
 before_install:
-  - curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb
-
-before_script:
-  - sleep 10
+  - curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb && sudo service elasticsearch start
+  - sleep 3
+  - sudo service elasticsearch status
 
 script: "npm run-script test-covered"
 after_script: "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
