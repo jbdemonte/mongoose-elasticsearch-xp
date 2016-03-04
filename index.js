@@ -116,6 +116,21 @@ function createMapping(settings, callback) {
 }
 
 /**
+ * Create a delayed function
+ * @param {Function} fn
+ * @param {Number} delay
+ * @returns {Function}
+ */
+function delayed(fn, delay) {
+  return function () {
+    var args = Array.prototype.slice.call(arguments);
+    setTimeout(function () {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+/**
  * Explicitly refresh the model index on ElasticSearch
  * static function
  * @param {Function} [callback]
@@ -124,7 +139,7 @@ function createMapping(settings, callback) {
 function refresh(callback) {
   var esOptions = this.esOptions();
   var defer = utils.defer(callback);
-  esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, defer.callback);
+  esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, esOptions.refreshDelay ? delayed(defer.callback, esOptions.refreshDelay) : defer.callback);
   return defer.promise;
 }
 

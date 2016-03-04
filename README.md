@@ -57,6 +57,7 @@ Options are:
 * `filter` - the function used for filtered indexing
 * `idsOnly` - whether or not returning only mongo ids
 * `mappingSettings` - default settings to use with `esCreateMapping`
+* `refreshDelay` - Time in ms to wait after `esRefresh`. Defaults to 0
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
