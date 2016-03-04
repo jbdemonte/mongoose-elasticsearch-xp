@@ -17,8 +17,10 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Indexing on demand](#indexing-on-demand)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
-- [Hydration](#hydration)
-- [Getting only Ids](#getting-only-ids)
+- [Queries](#queries)
+  - [Hydration](#hydration)
+  - [Getting only Ids](#getting-only-ids)
+- [Count](#count)
 - [Refreshing model index](#refreshing-model-index)
 
 ## Prerequisite
@@ -49,15 +51,16 @@ Options are:
 * `type`  - the type this model represents in Elasticsearch. Defaults to the model name.
 * `client` - an existing Elasticsearch `Client` instance.
 * `hosts` - an array hosts Elasticsearch is running on.
-* `host` - the host Elasticsearch is running on
-* `port` - the port Elasticsearch is running on
-* `auth` - the authentication needed to reach Elasticsearch server. In the standard format of 'username:password'
-* `protocol` - the protocol the Elasticsearch server uses. Defaults to http
-* `hydrate` - whether or not to replace ES source by mongo document
-* `filter` - the function used for filtered indexing
-* `idsOnly` - whether or not returning only mongo ids
-* `mappingSettings` - default settings to use with `esCreateMapping`
-* `refreshDelay` - Time in ms to wait after `esRefresh`. Defaults to 0
+* `host` - the host Elasticsearch is running on.
+* `port` - the port Elasticsearch is running on.
+* `auth` - the authentication needed to reach Elasticsearch server. In the standard format of 'username:password'.
+* `protocol` - the protocol the Elasticsearch server uses. Defaults to http.
+* `hydrate` - whether or not to replace ES source by mongo document.
+* `filter` - the function used for filtered indexing.
+* `idsOnly` - whether or not returning only mongo ids in `esSearch`.
+* `countOnly` - whether or not returning only the count value in `esCount`.
+* `mappingSettings` - default settings to use with `esCreateMapping`.
+* `refreshDelay` - Time in ms to wait after `esRefresh`. Defaults to 0.
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
@@ -330,7 +333,44 @@ User
 You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping. 
 If the mapping already exists, an Exception detailing such will be populated in the `err` argument. 
 
-## Hydration
+## Queries
+The full query DSL of Elasticsearch is exposed through the `esSearch` method. 
+For example, if you wanted to find all people between ages 21 and 30:
+
+```javascript
+Person
+  .esSearch({
+    range: {
+      age:{
+        from:21, 
+        to: 30
+      }
+    }
+  })
+  .then(function(results) {
+    // all the people who fit the age group are here!
+  });
+
+```
+See the Elasticsearch [query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) docs for more information.
+
+You can also specify full query:
+
+```javascript
+Person
+  .esSearch({
+    query: {match_all: {}},
+    sort: [
+      {age: {order: "desc"}}
+    ],
+    filter: {range: {age: {gte: 35}}}
+  })
+  .then(function(results) {
+    // ...
+  });
+```
+
+### Hydration
 By default objects returned from performing a search will be the objects as is in Elasticsearch. 
 This is useful in cases where only what was indexed needs to be displayed (think a list of results) while the actual mongoose object contains the full data when viewing one of the results.
 
@@ -367,7 +407,7 @@ User
   });
 ```
 
-## Getting only Ids
+### Getting only Ids
 A variant to hydration may be to get only ids instead of the complete Elasticsearch result. 
 Using `idsOnly` will return the ids cast in mongoose ObjectIds.
 
@@ -378,6 +418,43 @@ User
   // ids is an array of mongo id
   });
 ```
+
+## Count
+The [count API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-count.html) is available using the `esCount` function. 
+It handle the same queries as the `esSearch` method (string query, full query...).
+
+```javascript
+User
+  .esCount({match: {age: 34}})
+  .then(function (result) {
+    // result = {
+    //    "count" : 1,
+    //    "_shards" : {
+    //        "total" : 5,
+    //        "successful" : 5,
+    //        "failed" : 0
+    //    }
+    // }
+  });
+```
+
+### Getting only count value
+Count result can be simplified to the count value using the `countOnly` options whether in the plugin options or in the function options.
+
+```javascript
+User
+  .esCount(
+    {
+      query: {match_all: {}},
+      filter: {range: {age: {gte: 35}}}
+    },
+    {countOnly: true}
+  )
+  .then(function (count) {
+    // count is a number
+  })
+```
+
 
 ## Refreshing model index
 `esRefresh` explicitly refresh the model index by calling [indices-refresh](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-refresh.html).

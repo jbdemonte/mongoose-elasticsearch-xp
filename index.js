@@ -44,6 +44,7 @@ module.exports = function (schema, options) {
   schema.statics.esRefresh = refresh;
   schema.statics.esSearch = search;
   schema.statics.esSynchronize = synchronize;
+  schema.statics.esCount = count;
 
   schema.methods.esIndex = indexDoc;
   schema.methods.esRemove = removeDoc;
@@ -140,6 +141,45 @@ function refresh(callback) {
   var esOptions = this.esOptions();
   var defer = utils.defer(callback);
   esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, esOptions.refreshDelay ? delayed(defer.callback, esOptions.refreshDelay) : defer.callback);
+  return defer.promise;
+}
+
+/**
+ * Perform a count query on ElasticSearch
+ * static function
+ * @param {Object|string} query
+ * @param {Object} [options]
+ * @param {Function} [callback]
+ * @returns {Promise|undefined}
+ */
+function count(query, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  query = query || {};
+  options = options || {};
+
+  var esOptions = this.esOptions();
+  var countOnly = options.countOnly === false ? false : options.countOnly || esOptions.countOnly;
+  var params = {
+    index: esOptions.index,
+    type: esOptions.type
+  };
+  var defer = utils.defer(callback);
+
+  if (typeof query === 'string') {
+    params.q = query;
+  } else {
+    params.body = query.query ? query : {query: query};
+  }
+  esOptions.client.count(params, function (err, result) {
+    if (err) {
+      defer.reject(err);
+    } else {
+      defer.resolve(countOnly ? result.count : result);
+    }
+  });
   return defer.promise;
 }
 
