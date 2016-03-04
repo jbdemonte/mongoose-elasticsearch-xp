@@ -70,6 +70,7 @@ describe("esCount", function () {
     var self = this;
     var returned = self.model.esCount('name:jane', function (err, result) {
       expect(result.count).to.eql(1);
+      expect(returned).to.be.undefined;
       done();
     });
   });
