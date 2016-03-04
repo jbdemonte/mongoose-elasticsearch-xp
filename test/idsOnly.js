@@ -130,8 +130,7 @@ describe("idsOnly", function () {
           {age: {order: "desc"}}
         ],
         filter: {range: {age: {gte: 35}}}
-      },
-      {idsOnly: true}
+      }
     )
       .then(function (ids) {
         expect(ids.length).to.eql(2);
