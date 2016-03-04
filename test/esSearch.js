@@ -66,12 +66,18 @@ describe("esSearch", function () {
         expect(hit._id).to.eql(self.users.jane._id.toString());
         expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
   it('should accept callback', function (done) {
     var self = this;
     var returned = self.model.esSearch('name:jane', {}, function (err, result) {
+      if (err) {
+        return done(err);
+      }
       expect(result.hits.total).to.eql(1);
       var hit = result.hits.hits[0];
       expect(hit._id).to.eql(self.users.jane._id.toString());
@@ -84,6 +90,9 @@ describe("esSearch", function () {
   it('should accept callback without options', function (done) {
     var self = this;
     var returned = self.model.esSearch('name:jane', function (err, result) {
+      if (err) {
+        return done(err);
+      }
       expect(result.hits.total).to.eql(1);
       var hit = result.hits.hits[0];
       expect(hit._id).to.eql(self.users.jane._id.toString());
@@ -103,6 +112,9 @@ describe("esSearch", function () {
         expect(hit._id).to.eql(self.users.jane._id.toString());
         expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
@@ -116,6 +128,9 @@ describe("esSearch", function () {
         expect(hit._id).to.eql(self.users.jane._id.toString());
         expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
@@ -126,6 +141,9 @@ describe("esSearch", function () {
       .then(function (result) {
         expect(result.hits.total).to.eql(0);
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 

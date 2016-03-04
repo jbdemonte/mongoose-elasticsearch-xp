@@ -63,12 +63,18 @@ describe("esCount", function () {
       .then(function (result) {
         expect(result.count).to.eql(1);
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
   it('should accept callback', function (done) {
     var self = this;
     var returned = self.model.esCount('name:jane', function (err, result) {
+      if (err) {
+        return done(err);
+      }
       expect(result.count).to.eql(1);
       expect(returned).to.be.undefined;
       done();
@@ -82,6 +88,9 @@ describe("esCount", function () {
       .then(function (result) {
         expect(result.count).to.eql(1);
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
@@ -92,6 +101,9 @@ describe("esCount", function () {
       .then(function (result) {
         expect(result.count).to.eql(1);
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
@@ -102,6 +114,9 @@ describe("esCount", function () {
       .then(function (result) {
         expect(result.count).to.eql(0);
         done();
+      })
+      .catch(function (err) {
+        done(err);
       });
   });
 
