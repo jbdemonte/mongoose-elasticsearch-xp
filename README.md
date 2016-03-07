@@ -468,6 +468,17 @@ User
   });
 ```
 
+You also can provide explicit options:
+
+```javascript
+User
+  .esRefresh({refreshDelay: 1000})
+  .then(function () {
+    // index has been refreshed, and then, 1000ms has been waited
+  });
+```
+
+
 
 [npm-url]: https://npmjs.org/package/mongoose-elasticsearch-xp
 [npm-image]: https://badge.fury.io/js/mongoose-elasticsearch-xp.svg

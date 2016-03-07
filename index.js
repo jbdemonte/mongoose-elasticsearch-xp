@@ -137,10 +137,16 @@ function delayed(fn, delay) {
  * @param {Function} [callback]
  * @returns {Promise|undefined}
  */
-function refresh(callback) {
+function refresh(options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  options = options || {};
   var esOptions = this.esOptions();
+  var refreshDelay = options.refreshDelay === false ? false : options.refreshDelay || esOptions.refreshDelay;
   var defer = utils.defer(callback);
-  esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, esOptions.refreshDelay ? delayed(defer.callback, esOptions.refreshDelay) : defer.callback);
+  esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, refreshDelay ? delayed(defer.callback, refreshDelay) : defer.callback);
   return defer.promise;
 }
 
