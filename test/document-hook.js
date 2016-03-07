@@ -6,6 +6,54 @@ describe("document-hook", function () {
 
   utils.setup();
 
+  it('should be able to save without any previous call to ES', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      name: String
+    });
+
+    UserSchema.plugin(plugin);
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var user;
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        return utils.deleteMongooseModels();
+      })
+      .then(function () {
+        // recreate new model
+        UserSchema = new mongoose.Schema({
+          name: String
+        });
+        UserSchema.plugin(plugin);
+        UserModel = mongoose.model('User', UserSchema);
+        user = new UserModel({name: 'John', age: 35});
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+          user.on('es-indexed', function (err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          user.save();
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
   it('should be indexed then removed', function (done) {
 
     var UserSchema = new mongoose.Schema({

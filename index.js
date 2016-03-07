@@ -46,6 +46,7 @@ module.exports = function (schema, options) {
   schema.statics.esSynchronize = synchronize;
   schema.statics.esCount = count;
 
+  schema.methods.esOptions = esOptions;
   schema.methods.esIndex = indexDoc;
   schema.methods.esRemove = removeDoc;
 
@@ -370,7 +371,7 @@ function synchronize(conditions, projection, options, callback) {
  * @returns {Promise|undefined}
  */
 function indexDoc(callback) {
-  var esOptions = this.schema.statics.esOptions();
+  var esOptions = this.esOptions();
   var defer = utils.defer(callback);
 
   esOptions.client.index(
@@ -393,7 +394,7 @@ function indexDoc(callback) {
  * @returns {Promise|undefined}
  */
 function removeDoc(callback) {
-  var esOptions = this.schema.statics.esOptions();
+  var esOptions = this.esOptions();
   var defer = utils.defer(callback);
   deleteByMongoId(esOptions, this, defer.callback, 3);
   return defer.promise;
@@ -437,7 +438,7 @@ function deleteByMongoId(options, document, callback, retry) {
  */
 function postSave(doc) {
   if (doc) {
-    var esOptions = this.schema.statics.esOptions();
+    var esOptions = this.esOptions();
     if (!esOptions.filter || esOptions.filter(doc)) {
       doc.esIndex(function (err, res) {
         doc.emit('es-indexed', err, res);
