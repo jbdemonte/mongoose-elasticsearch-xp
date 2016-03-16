@@ -70,66 +70,54 @@ function createMapping(settings, callback) {
     callback = settings;
     settings = null;
   }
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
 
-  var defer = utils.defer(callback);
-  var esOptions = this.esOptions();
+    settings = settings || esOptions.mappingSettings || {};
 
-  settings = settings || esOptions.mappingSettings || {};
+    var mapping = {};
+    mapping[esOptions.type] = esOptions.mapping;
 
-  var mapping = {};
-  mapping[esOptions.type] = esOptions.mapping;
-
-  esOptions.client.indices.exists({index: esOptions.index}, function (err, exists) {
-    if (err) {
-      return defer.reject(err);
-    }
-    if (exists) {
-      return esOptions.client.indices.putMapping(
-        {
-          index: esOptions.index,
-          type: esOptions.type,
-          body: mapping
-        },
-        defer.callback
-      );
-    }
-    return esOptions.client.indices.create(
-      {
-        index: esOptions.index,
-        body: settings
-      },
-      function (err) {
-        if (err) {
-          return defer.reject(err);
-        }
-        esOptions.client.indices.putMapping(
+    esOptions.client.indices.exists({index: esOptions.index}, function (err, exists) {
+      if (err) {
+        return reject(err);
+      }
+      if (exists) {
+        return esOptions.client.indices.putMapping(
           {
             index: esOptions.index,
             type: esOptions.type,
             body: mapping
           },
-          defer.callback
+          function (err, result) {
+            return err ? reject(err) : resolve(result);
+          }
         );
       }
-    );
+      return esOptions.client.indices.create(
+        {
+          index: esOptions.index,
+          body: settings
+        },
+        function (err) {
+          if (err) {
+            return reject(err);
+          }
+          esOptions.client.indices.putMapping(
+            {
+              index: esOptions.index,
+              type: esOptions.type,
+              body: mapping
+            },
+            function (err, result) {
+              return err ? reject(err) : resolve(result);
+            }
+          );
+        }
+      );
+    });
   });
-
-  return defer.promise;
-}
-
-/**
- * Create a delayed function
- * @param {Function} fn
- * @param {Number} delay
- * @returns {Function}
- */
-function delayed(fn, delay) {
-  return function () {
-    var args = Array.prototype.slice.call(arguments);
-    setTimeout(function () {
-      fn.apply(this, args);
-    }, delay);
-  };
 }
 
 /**
@@ -144,11 +132,20 @@ function refresh(options, callback) {
     options = {};
   }
   options = options || {};
-  var esOptions = this.esOptions();
-  var refreshDelay = options.refreshDelay === false ? false : options.refreshDelay || esOptions.refreshDelay;
-  var defer = utils.defer(callback);
-  esOptions.client.indices.refresh({index: esOptions.index, type: esOptions.type}, refreshDelay ? delayed(defer.callback, refreshDelay) : defer.callback);
-  return defer.promise;
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    var refreshDelay = options.refreshDelay === false ? 0 : options.refreshDelay || esOptions.refreshDelay;
+    esOptions.client.indices.refresh({
+      index: esOptions.index,
+      type: esOptions.type
+    },
+    function (err, result) {
+      setTimeout(function () {
+        return err ? reject(err) : resolve(result);
+      }, refreshDelay);
+    });
+  });
 }
 
 /**
@@ -166,28 +163,27 @@ function count(query, options, callback) {
   }
   query = query || {};
   options = options || {};
-
-  var esOptions = this.esOptions();
-  var countOnly = options.countOnly === false ? false : options.countOnly || esOptions.countOnly;
-  var params = {
-    index: esOptions.index,
-    type: esOptions.type
-  };
-  var defer = utils.defer(callback);
-
-  if (typeof query === 'string') {
-    params.q = query;
-  } else {
-    params.body = query.query ? query : {query: query};
-  }
-  esOptions.client.count(params, function (err, result) {
-    if (err) {
-      defer.reject(err);
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    var countOnly = options.countOnly === false ? false : options.countOnly || esOptions.countOnly;
+    var params = {
+      index: esOptions.index,
+      type: esOptions.type
+    };
+    if (typeof query === 'string') {
+      params.q = query;
     } else {
-      defer.resolve(countOnly ? result.count : result);
+      params.body = query.query ? query : {query: query};
     }
+    esOptions.client.count(params, function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(countOnly ? result.count : result);
+      }
+    });
   });
-  return defer.promise;
 }
 
 /**
@@ -205,75 +201,73 @@ function search(query, options, callback) {
   }
   query = query || {};
   options = options || {};
-
   var self = this;
-  var esOptions = self.esOptions();
-  var hydrate = options.hydrate === false ? false : options.hydrate || esOptions.hydrate;
-  var idsOnly = options.idsOnly === false ? false : options.idsOnly || esOptions.idsOnly;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    var hydrate = options.hydrate === false ? false : options.hydrate || esOptions.hydrate;
+    var idsOnly = options.idsOnly === false ? false : options.idsOnly || esOptions.idsOnly;
 
-  var params = {
-    index: esOptions.index,
-    type: esOptions.type
-  };
-  var defer = utils.defer(callback);
+    var params = {
+      index: esOptions.index,
+      type: esOptions.type
+    };
 
-  if (typeof query === 'string') {
-    params.q = query;
-  } else {
-    params.body = query.query ? query : {query: query};
-  }
-  if (hydrate) {
-    params._source = false;
-  }
-  esOptions.client.search(params, function (err, result) {
-    if (err) {
-      return defer.reject(err);
+    if (typeof query === 'string') {
+      params.q = query;
+    } else {
+      params.body = query.query ? query : {query: query};
     }
-
-    if (!hydrate && !idsOnly) {
-      return defer.resolve(result);
+    if (hydrate) {
+      params._source = false;
     }
-
-    var ids = result.hits.hits.map(function (hit) {
-      return mongoose.Types.ObjectId(hit._id);
-    });
-
-    if (idsOnly) {
-      return defer.resolve(ids);
-    }
-
-    var select = hydrate.select || null;
-    var opts = hydrate.options || null;
-    var docsOnly = hydrate.docsOnly || false;
-
-    if (!result.hits.total) {
-      return defer.resolve(docsOnly ? [] : result);
-    }
-
-
-    self.find({_id: {$in: ids}}, select, opts, function (err, users) {
+    esOptions.client.search(params, function (err, result) {
       if (err) {
-        return defer.reject(err);
+        return reject(err);
       }
-      var userByIds = {};
-      users.forEach(function (user) {
-        userByIds[user._id] = user;
+
+      if (!hydrate && !idsOnly) {
+        return resolve(result);
+      }
+
+      var ids = result.hits.hits.map(function (hit) {
+        return mongoose.Types.ObjectId(hit._id);
       });
-      if (docsOnly) {
-        result = ids.map(function (id) {
-          return userByIds[id];
-        });
-      } else {
-        result.hits.hits.forEach(function (hit) {
-          hit.doc = userByIds[hit._id];
-        });
+
+      if (idsOnly) {
+        return resolve(ids);
       }
-      return defer.resolve(result);
+
+      var select = hydrate.select || null;
+      var opts = hydrate.options || null;
+      var docsOnly = hydrate.docsOnly || false;
+
+      if (!result.hits.total) {
+        return resolve(docsOnly ? [] : result);
+      }
+
+
+      self.find({_id: {$in: ids}}, select, opts, function (err, users) {
+        if (err) {
+          return reject(err);
+        }
+        var userByIds = {};
+        users.forEach(function (user) {
+          userByIds[user._id] = user;
+        });
+        if (docsOnly) {
+          result = ids.map(function (id) {
+            return userByIds[id];
+          });
+        } else {
+          result.hits.hits.forEach(function (hit) {
+            hit.doc = userByIds[hit._id];
+          });
+        }
+        return resolve(result);
+      });
+
     });
-
   });
-
-  return defer.promise;
 }
 
 /**
@@ -299,69 +293,72 @@ function synchronize(conditions, projection, options, callback) {
     callback = options;
     options = null;
   }
-
   var model = this;
-  var defer = utils.defer(callback);
-  var esOptions = this.esOptions();
-  var batch = esOptions.bulk && esOptions.bulk.batch ? esOptions.bulk.batch : 50;
-  var stream = this.find(conditions || {}, projection, options).batchSize(batch).stream();
-  var bulker = esOptions.bulker || new Bulker(esOptions.client);
-  var streamClosed = false;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = model.esOptions();
+    var batch = esOptions.bulk && esOptions.bulk.batch ? esOptions.bulk.batch : 50;
+    var stream = model.find(conditions || {}, projection, options).batchSize(batch).stream();
+    var bulker = esOptions.bulker || new Bulker(esOptions.client);
+    var streamClosed = false;
 
-  function finalize() {
-    bulker.removeListener('error', onError);
-    bulker.removeListener('sent', onSent);
-    esOptions.client.indices.refresh({index: esOptions.index}, defer.callback);
-  }
-
-  function onError(err) {
-    model.emit('es-bulk-error', err);
-    if (streamClosed) {
-      finalize();
-    } else {
-      stream.resume();
-    }
-  }
-
-  function onSent(len) {
-    model.emit('es-bulk-sent', len);
-    if (streamClosed) {
-      finalize();
-    } else {
-      stream.resume();
-    }
-  }
-
-  bulker.on('error', onError);
-  bulker.on('sent', onSent);
-
-  stream.on('data', function (doc) {
-    stream.pause();
-    var sending;
-    if (!esOptions.filter || esOptions.filter(doc)) {
-      sending = bulker.push(
-        {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
-        utils.serialize(doc, esOptions.mapping)
+    function finalize() {
+      bulker.removeListener('error', onError);
+      bulker.removeListener('sent', onSent);
+      esOptions.client.indices.refresh(
+        {index: esOptions.index},
+        function (err, result) {
+          return err ? reject(err) : resolve(result);
+        }
       );
-      model.emit('es-bulk-data', doc);
-    } else {
-      model.emit('es-bulk-filtered', doc);
     }
-    if (!sending) {
-      stream.resume();
-    }
-  });
 
-  stream.on('close', function () {
-    streamClosed = true;
-    if (bulker.filled()) {
-      bulker.flush();
-    } else {
-      finalize();
+    function onError(err) {
+      model.emit('es-bulk-error', err);
+      if (streamClosed) {
+        finalize();
+      } else {
+        stream.resume();
+      }
     }
-  });
 
-  return defer.promise;
+    function onSent(len) {
+      model.emit('es-bulk-sent', len);
+      if (streamClosed) {
+        finalize();
+      } else {
+        stream.resume();
+      }
+    }
+
+    bulker.on('error', onError);
+    bulker.on('sent', onSent);
+
+    stream.on('data', function (doc) {
+      stream.pause();
+      var sending;
+      if (!esOptions.filter || esOptions.filter(doc)) {
+        sending = bulker.push(
+          {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
+          utils.serialize(doc, esOptions.mapping)
+        );
+        model.emit('es-bulk-data', doc);
+      } else {
+        model.emit('es-bulk-filtered', doc);
+      }
+      if (!sending) {
+        stream.resume();
+      }
+    });
+
+    stream.on('close', function () {
+      streamClosed = true;
+      if (bulker.filled()) {
+        bulker.flush();
+      } else {
+        finalize();
+      }
+    });
+  });
 }
 
 /**
@@ -371,20 +368,21 @@ function synchronize(conditions, projection, options, callback) {
  * @returns {Promise|undefined}
  */
 function indexDoc(callback) {
-  var esOptions = this.esOptions();
-  var defer = utils.defer(callback);
-
-  esOptions.client.index(
-    {
-      index: esOptions.index,
-      type: esOptions.type,
-      id: this._id.toString(),
-      body: utils.serialize(this, esOptions.mapping)
-    },
-    defer.callback
-  );
-
-  return defer.promise;
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    esOptions.client.index(
+      {
+        index: esOptions.index,
+        type: esOptions.type,
+        id: self._id.toString(),
+        body: utils.serialize(self, esOptions.mapping)
+      },
+      function (err, result) {
+        return err ? reject(err) : resolve(result);
+      }
+    );
+  });
 }
 
 /**
@@ -394,10 +392,18 @@ function indexDoc(callback) {
  * @returns {Promise|undefined}
  */
 function removeDoc(callback) {
-  var esOptions = this.esOptions();
-  var defer = utils.defer(callback);
-  deleteByMongoId(esOptions, this, defer.callback, 3);
-  return defer.promise;
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    deleteByMongoId(
+      esOptions,
+      self,
+      function (err, result) {
+        return err ? reject(err) : resolve(result);
+      },
+      3
+    );
+  });
 }
 
 /**
