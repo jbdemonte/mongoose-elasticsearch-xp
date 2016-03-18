@@ -19,7 +19,11 @@ module.exports = function (schema, options) {
       options.index = this.collection.name;
     }
     if (!options.type) {
-      options.type = utils.lcFirst(this.modelName);
+      options.type = utils.lcFirst(this.modelName || this.constructor.modelName);
+    }
+
+    if (!options.index || !options.type) {
+      throw new Error(options.index ? 'Missing model name to build ES type' : 'Missing collection name to build ES index');
     }
 
     if (!options.client) {
