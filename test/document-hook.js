@@ -266,4 +266,97 @@ describe("document-hook", function () {
       });
   });
 
+  it('should handle partial save', function (done) {
+
+    var CitySchema = new mongoose.Schema({
+      _id: false,
+      name: String
+    });
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+      city: {
+        type: CitySchema,
+        select: false
+      }
+    });
+
+    UserSchema.plugin(plugin);
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var user;
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        UserModel = mongoose.model('User', UserSchema);
+        user = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}});
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+          user.on('es-indexed', function (err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          user.save();
+        });
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve) {
+          var options = UserModel.esOptions();
+          var client = options.client;
+          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
+            expect(resp.found).to.eql(true);
+            expect(resp._id).to.eql(user._id.toString());
+            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}});
+            resolve();
+          });
+        });
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+          UserModel
+            .findById(user._id)
+            .then(function (dbUser) {
+              dbUser.age = 36;
+              expect(dbUser.city).to.be.undefined; // because of select false
+
+              dbUser.on('es-indexed', function (err) {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              });
+              dbUser.save();
+            });
+        });
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve) {
+          var options = UserModel.esOptions();
+          var client = options.client;
+          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
+            expect(resp.found).to.eql(true);
+            expect(resp._id).to.eql(user._id.toString());
+            expect(resp._source).to.eql({name: 'John', age: 36, city: {name: 'Paris'}});
+            resolve();
+          });
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
 });

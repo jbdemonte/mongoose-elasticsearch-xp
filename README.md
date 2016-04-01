@@ -269,6 +269,8 @@ Instances of Movie model having 'action' as their genre will be indexed to Elast
 ### Indexing On Demand
 You can do on-demand indexes using the `esIndex` function
 
+`esIndex([update], [callback])`
+
 ```javascript
 Dude.findOne({name:'Jeffrey Lebowski', function(err, dude) {
   dude.awesome = true;
@@ -277,6 +279,9 @@ Dude.findOne({name:'Jeffrey Lebowski', function(err, dude) {
   });
 });
 ```
+
+`update` parameter allows to update a partial document ([documentation](https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-update)).
+It is especially useful when dealing with not loaded properties (when setting `select = false` in schema properties).
 
 Note that indexing a model does not mean it will be persisted to
 mongodb. Use save for that.

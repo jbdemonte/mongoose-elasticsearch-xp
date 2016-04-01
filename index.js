@@ -54,6 +54,7 @@ module.exports = function (schema, options) {
   schema.methods.esIndex = indexDoc;
   schema.methods.esRemove = removeDoc;
 
+  schema.pre('save', preSave);
   schema.post('save', postSave);
   schema.post('findOneAndUpdate', postSave);
 
@@ -368,19 +369,25 @@ function synchronize(conditions, projection, options, callback) {
 /**
  * Index the current document on ElasticSearch
  * document function
+ * @param {Boolean} [update] default false
  * @param {Function} [callback]
  * @returns {Promise|undefined}
  */
-function indexDoc(callback) {
+function indexDoc(update, callback) {
   var self = this;
+  if (typeof update === 'function') {
+    callback = update;
+    update = false;
+  }
   return utils.run(callback, function (resolve, reject) {
     var esOptions = self.esOptions();
-    esOptions.client.index(
+    var body = utils.serialize(self, esOptions.mapping);
+    esOptions.client[update ? 'update' : 'index'](
       {
         index: esOptions.index,
         type: esOptions.type,
         id: self._id.toString(),
-        body: utils.serialize(self, esOptions.mapping)
+        body: update ? {doc: body}: body
       },
       function (err, result) {
         return err ? reject(err) : resolve(result);
@@ -442,15 +449,29 @@ function deleteByMongoId(options, document, callback, retry) {
 }
 
 /**
+ * Pre save document handler
+ * internal
+ * @param {Function} next
+ */
+function preSave(next) {
+  this._mexp_WasNew = this.isNew;
+  next();
+}
+
+/**
  * Post save document handler
  * internal
  * @param {Object} doc
  */
 function postSave(doc) {
   if (doc) {
+    var wasNew = doc._mexp_WasNew;
+    if (wasNew) {
+      delete doc._mexp_WasNew;
+    }
     var esOptions = this.esOptions();
     if (!esOptions.filter || esOptions.filter(doc)) {
-      doc.esIndex(function (err, res) {
+      doc.esIndex(!wasNew, function (err, res) {
         doc.emit('es-indexed', err, res);
         doc.constructor.emit('es-indexed', err, res);
       });
