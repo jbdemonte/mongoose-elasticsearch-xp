@@ -52,6 +52,7 @@ module.exports = function (schema, options) {
 
   schema.methods.esOptions = esOptions;
   schema.methods.esIndex = indexDoc;
+  schema.methods.esUnset = unsetFields;
   schema.methods.esRemove = removeDoc;
 
   schema.pre('save', preSave);
@@ -128,6 +129,7 @@ function createMapping(settings, callback) {
 /**
  * Explicitly refresh the model index on ElasticSearch
  * static function
+ * @param {Object} [options]
  * @param {Function} [callback]
  * @returns {Promise|undefined}
  */
@@ -397,6 +399,34 @@ function indexDoc(update, callback) {
 }
 
 /**
+ * Unset some fields from the current document
+ * @param {String|Array} fields to unset
+ * @param {Function} [callback]
+ * @returns {Promise|undefined}
+ */
+function unsetFields(fields, callback) {
+  var self = this;
+  return utils.run(callback, function (resolve, reject) {
+    var esOptions = self.esOptions();
+    esOptions.client.update(
+      {
+        index: esOptions.index,
+        type: esOptions.type,
+        id: self._id.toString(),
+        body: {
+          script: (typeof fields === 'string' ? [fields] : fields).map(function (field) {
+            return 'ctx._source.remove("' + field + '")';
+          }).join(';')
+        }
+      },
+      function (err, result) {
+        return err ? reject(err) : resolve(result);
+      }
+    );
+  });
+}
+
+/**
  * Remove the current document from ElasticSearch
  * document function
  * @param {Function} [callback]
@@ -454,7 +484,12 @@ function deleteByMongoId(options, document, callback, retry) {
  * @param {Function} next
  */
 function preSave(next) {
-  this._mexp_WasNew = this.isNew;
+  this._mexp = {
+    wasNew: this.isNew
+  };
+  if (!this.isNew) {
+    this._mexp.unset = utils.getUndefineds(this, this.esOptions().mapping);
+  }
   next();
 }
 
@@ -465,16 +500,26 @@ function preSave(next) {
  */
 function postSave(doc) {
   if (doc) {
-    var wasNew = doc._mexp_WasNew;
-    if (wasNew) {
-      delete doc._mexp_WasNew;
-    }
+    var data = doc._mexp;
     var esOptions = this.esOptions();
+    delete doc._mexp;
     if (!esOptions.filter || esOptions.filter(doc)) {
-      doc.esIndex(!wasNew, function (err, res) {
-        doc.emit('es-indexed', err, res);
-        doc.constructor.emit('es-indexed', err, res);
-      });
+      doc
+        .esIndex(!data.wasNew)
+        .then(function (res) {
+          if (data.unset && data.unset.length) {
+            return doc.esUnset(data.unset);
+          }
+          return res;
+        })
+        .then(function (res) {
+          doc.emit('es-indexed', undefined, res);
+          doc.constructor.emit('es-indexed', undefined, res);
+        })
+        .catch(function (err) {
+          doc.emit('es-indexed', err);
+          doc.constructor.emit('es-indexed', err);
+        });
     } else {
       postRemove(doc);
     }
