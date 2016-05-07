@@ -9,7 +9,8 @@ describe("document-hook", function () {
   it('should be able to save without any previous call to ES', function (done) {
 
     var UserSchema = new mongoose.Schema({
-      name: String
+      name: String,
+      age: Number
     });
 
     UserSchema.plugin(plugin);
@@ -28,7 +29,8 @@ describe("document-hook", function () {
       .then(function () {
         // recreate new model
         UserSchema = new mongoose.Schema({
-          name: String
+          name: String,
+          age: Number
         });
         UserSchema.plugin(plugin);
         UserModel = mongoose.model('User', UserSchema);
