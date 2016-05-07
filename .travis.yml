@@ -10,7 +10,7 @@ services:
 before_install:
   - curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb
   - 'echo "script.inline: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
-  - cat sudo tee -a /etc/elasticsearch/elasticsearch.yml
+  - cat /etc/elasticsearch/elasticsearch.yml
   - sudo service elasticsearch start
   - sleep 3
   - sudo service elasticsearch status
