@@ -371,7 +371,7 @@ function synchronize(conditions, projection, options, callback) {
 /**
  * Index the current document on ElasticSearch
  * document function
- * @param {Boolean} [update] default false
+ * @param {Boolean|Object} [update] default false
  * @param {Function} [callback]
  * @returns {Promise|undefined}
  */
@@ -384,6 +384,11 @@ function indexDoc(update, callback) {
   return utils.run(callback, function (resolve, reject) {
     var esOptions = self.esOptions();
     var body = utils.serialize(self, esOptions.mapping);
+    if (update && update.unset) {
+      (typeof update.unset === 'string' ? [update.unset] : update.unset).forEach(function (field) {
+        body[field] = null;
+      });
+    }
     esOptions.client[update ? 'update' : 'index'](
       {
         index: esOptions.index,
@@ -408,16 +413,31 @@ function unsetFields(fields, callback) {
   var self = this;
   return utils.run(callback, function (resolve, reject) {
     var esOptions = self.esOptions();
+    var body;
+
+    if (typeof fields === 'string') {
+      fields = [fields];
+    }
+
+    if (esOptions.script) {
+      body = {
+        script: fields.map(function (field) {
+          return 'ctx._source.remove("' + field + '")';
+        }).join(';')
+      };
+    } else {
+      body = {doc: {}};
+      fields.forEach(function (field) {
+        body.doc[field] = null;
+      });
+    }
+
     esOptions.client.update(
       {
         index: esOptions.index,
         type: esOptions.type,
         id: self._id.toString(),
-        body: {
-          script: (typeof fields === 'string' ? [fields] : fields).map(function (field) {
-            return 'ctx._source.remove("' + field + '")';
-          }).join(';')
-        }
+        body: body
       },
       function (err, result) {
         return err ? reject(err) : resolve(result);
@@ -505,9 +525,9 @@ function postSave(doc) {
     delete doc._mexp;
     if (!esOptions.filter || esOptions.filter(doc)) {
       doc
-        .esIndex(!data.wasNew)
+        .esIndex(data.wasNew ? false : {unset: data.unset})
         .then(function (res) {
-          if (data.unset && data.unset.length) {
+          if (esOptions.script && data.unset && data.unset.length) {
             return doc.esUnset(data.unset);
           }
           return res;

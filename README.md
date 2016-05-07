@@ -15,6 +15,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Indexing an existing collection](#indexing-an-existing-collection)
   - [Filtered indexing](#filtered-indexing)
   - [Indexing on demand](#indexing-on-demand)
+  - [Unsetting fields](#unsetting-fields)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Queries](#queries)
@@ -61,7 +62,8 @@ Options are:
 * `idsOnly` - whether or not returning only mongo ids in `esSearch`.
 * `countOnly` - whether or not returning only the count value in `esCount`.
 * `mappingSettings` - default settings to use with `esCreateMapping`.
-* `refreshDelay` - Time in ms to wait after `esRefresh`. Defaults to 0.
+* `refreshDelay` - time in ms to wait after `esRefresh`. Defaults to 0.
+* `script` - whether or not the inline script are enabled in elasticsearch. Defaults to false.
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
@@ -109,7 +111,7 @@ User
       query: "john"
     }
   })
-  .then(function(results) {
+  .then(function (results) {
     // results here
   });
 ```
@@ -128,7 +130,7 @@ User
       }
     }
   })
-  .then(function(results) {
+  .then(function (results) {
     // results here
   });
 ```
@@ -137,7 +139,7 @@ User
 ```javascript
 User
   .esSearch("name:john")
-  .then(function(results) {
+  .then(function (results) {
     // results here
   });
 ```
@@ -258,7 +260,7 @@ var MovieSchema = new Schema({
 });
 
 MovieSchema.plugin(mongoosastic, {
-  filter: function(doc) {
+  filter: function (doc) {
     return doc.genre === 'action';
   }
 });
@@ -272,7 +274,7 @@ You can do on-demand indexes using the `esIndex` function
 `esIndex([update], [callback])`
 
 ```javascript
-Dude.findOne({name:'Jeffrey Lebowski', function(err, dude) {
+Dude.findOne({name:'Jeffrey Lebowski', function (err, dude) {
   dude.awesome = true;
   dude.esIndex(function (err, res) {
     console.log("egads! I've been indexed!");
@@ -285,6 +287,19 @@ It is especially useful when dealing with not loaded properties (when setting `s
 
 Note that indexing a model does not mean it will be persisted to
 mongodb. Use save for that.
+
+### Unsetting fields
+By default, inline scripts are disabled in Elasticsearch. In this case, unsetting fields result in setting fields to `null`.
+
+```javascript
+Dude.findOne({name:'Jeffrey Lebowski', function (err, dude) {
+  dude.job = undefined;
+  dude.save(); // => job fields will be set to null on Elasticsearch
+});
+```
+
+If [dynamic-scripting](https://www.elastic.co/guide/en/elasticsearch/reference/2.3/modules-scripting.html#enable-dynamic-scripting) is enabled, setting `script` to true will use `ctx._source.remove` and fields will be removed in Elasticsearch.
+
 
 ## Mapping
 
@@ -353,7 +368,7 @@ Person
       }
     }
   })
-  .then(function(results) {
+  .then(function (results) {
     // all the people who fit the age group are here!
   });
 
@@ -371,7 +386,7 @@ Person
     ],
     filter: {range: {age: {gte: 35}}}
   })
-  .then(function(results) {
+  .then(function (results) {
     // ...
   });
 ```
