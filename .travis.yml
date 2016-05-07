@@ -12,5 +12,6 @@ before_install:
   - sleep 3
   - sudo service elasticsearch status
 
+before_script: 'echo "script.inline: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
 script: "npm run-script test-covered"
 after_script: "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
