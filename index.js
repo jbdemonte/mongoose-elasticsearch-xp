@@ -389,18 +389,36 @@ function indexDoc(update, callback) {
         body[field] = null;
       });
     }
-    esOptions.client[update ? 'update' : 'index'](
-      {
-        index: esOptions.index,
-        type: esOptions.type,
-        id: self._id.toString(),
-        body: update ? {doc: body}: body
-      },
-      function (err, result) {
+    _indexDoc(self._id, body, esOptions, resolve, reject, update);
+  });
+}
+
+/**
+ * Update or Index a document, when updating, retry as index when getting a 404 error
+ * @param {ObjectId|String} id
+ * @param {Object} body
+ * @param {Object} esOptions
+ * @param {Function} resolve
+ * @param {Function} reject
+ * @param {Boolean} [update] default false
+ * @private
+ */
+function _indexDoc(id, body, esOptions, resolve, reject, update) {
+  esOptions.client[update ? 'update' : 'index'](
+    {
+      index: esOptions.index,
+      type: esOptions.type,
+      id: id.toString(),
+      body: update ? {doc: body}: body
+    },
+    function (err, result) {
+      if (update && err && err.status === 404) {
+        _indexDoc(id, body, esOptions, resolve, reject);
+      } else {
         return err ? reject(err) : resolve(result);
       }
-    );
-  });
+    }
+  );
 }
 
 /**
@@ -456,46 +474,21 @@ function removeDoc(callback) {
   var self = this;
   return utils.run(callback, function (resolve, reject) {
     var esOptions = self.esOptions();
-    deleteByMongoId(
-      esOptions,
-      self,
-      function (err, result) {
-        return err ? reject(err) : resolve(result);
+    esOptions.client.delete(
+      {
+        index: esOptions.index,
+        type: esOptions.type,
+        id: self._id.toString()
       },
-      3
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
     );
   });
-}
-
-/**
- * Delete one document on ElasticSearch
- * Internal
- * @param {Object} options
- * @param {Object} document
- * @param {Function} callback
- * @param {Number} retry
- */
-function deleteByMongoId(options, document, callback, retry) {
-  options.client.delete(
-    {
-      index: options.index,
-      type: options.type,
-      id: document._id.toString()
-    },
-    function (err) {
-      if (err && err.message.indexOf('404') > -1) {
-        if (retry && retry > 0) {
-          setTimeout(function () {
-            deleteByMongoId(options, document, callback, retry - 1);
-          }, 500);
-        } else {
-          callback(err);
-        }
-      } else {
-        callback(err);
-      }
-    }
-  );
 }
 
 /**
@@ -541,7 +534,14 @@ function postSave(doc) {
           doc.constructor.emit('es-indexed', err);
         });
     } else {
-      postRemove(doc);
+      doc.emit('es-filtered');
+      doc.constructor.emit('es-filtered');
+      if (!data.wasNew) {
+        doc.esRemove(function (err, res) {
+          doc.emit('es-removed', err, res);
+          doc.constructor.emit('es-removed', err, res);
+        });
+      }
     }
   }
 }
