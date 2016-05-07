@@ -643,4 +643,86 @@ describe("document-hook", function () {
       });
   });
 
+  it('should handle FindOneAndUpdate', function (done) {
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number
+    });
+
+    UserSchema.plugin(plugin);
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var user;
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        return utils.deleteMongooseModels();
+      })
+      .then(function () {
+        // recreate new model
+        UserSchema = new mongoose.Schema({
+          name: String,
+          age: Number
+        });
+        UserSchema.plugin(plugin);
+        UserModel = mongoose.model('User', UserSchema);
+        user = new UserModel({name: 'John', age: 35});
+        return user.save();
+      })
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        return utils.deleteMongooseModels();
+      })
+      .then(function () {
+        // recreate new model
+        UserSchema = new mongoose.Schema({
+          name: String,
+          age: Number
+        });
+        UserSchema.plugin(plugin);
+        UserModel = mongoose.model('User', UserSchema);
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+          UserModel.on('es-indexed', function (err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          UserModel.findOneAndUpdate({_id: user._id}, {$set: {age: 67}}, {new: true}, function (err, usr) {
+            if (err || !usr) {
+              reject(err || new Error('no match'));
+            }
+          });
+        });
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve) {
+          var options = UserModel.esOptions();
+          var client = options.client;
+          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
+            expect(resp.found).to.eql(true);
+            expect(resp._id).to.eql(user._id.toString());
+            expect(resp._source).to.eql({name: 'John', age: 67});
+            resolve();
+          });
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
 });

@@ -519,9 +519,9 @@ function preSave(next) {
  * @param {Object} doc
  */
 function postSave(doc) {
-  if (doc) {
-    var data = doc._mexp;
-    var esOptions = this.esOptions();
+  if (doc && doc.esOptions) {
+    var data = doc._mexp || {};
+    var esOptions = doc.esOptions();
     delete doc._mexp;
     if (!esOptions.filter || esOptions.filter(doc)) {
       doc
@@ -552,7 +552,7 @@ function postSave(doc) {
  * @param {Object} doc
  */
 function postRemove(doc) {
-  if (doc) {
+  if (doc && doc.esOptions) {
     doc.esRemove(function (err, res) {
       doc.emit('es-removed', err, res);
       doc.constructor.emit('es-removed', err, res);

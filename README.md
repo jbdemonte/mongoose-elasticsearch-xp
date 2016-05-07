@@ -43,6 +43,11 @@ The latest version of this package will be as close as possible to the latest `e
 npm install --save mongoose-elasticsearch-xp
 ```
 
+## Limitation
+
+  - This plugin requires mongoose object to be indexed, not lean object
+  - Indexing using findOneAndUpdate requires `{new: true}` as options to be updated, else previous data will be saved
+
 ## Setup
 
 ### Model.plugin(mongoose-elasticsearch-xp, options)
@@ -169,7 +174,7 @@ MyModel.plugin(mexp, {
 ## Indexing
 
 ### Saving a document
-The indexing takes place after saving inside the mongodb and is a defered process. 
+The indexing takes place after saving inside the mongodb and is a deferred process. 
 One can check the end of the indexion catching `es-indexed` event. 
 This event is emitted both from the document and the model (which make unit tests easier).
 
