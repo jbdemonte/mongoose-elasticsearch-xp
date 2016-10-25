@@ -95,7 +95,7 @@ This can be a little wasteful especially considering that the document is now ju
 
 
 ```javascript
-var User = new Schema({
+var User = new mongoose.Schema({
     name: {type:String, es_indexed:true}, 
     email: String, 
     city: String
@@ -194,13 +194,13 @@ doc.save(function (err) {
 In order to index nested models you can refer following example.
 
 ```javascript
-var Comment = new Schema({
+var Comment = new mongoose.Schema({
     title: String, 
     body: String, 
     author: String
 });
 
-var User = new Schema({
+var User = new mongoose.Schema({
     name: {type:String, es_indexed:true}, 
     email: String, 
     city: String, 
@@ -215,7 +215,7 @@ Already have a mongodb collection that you'd like to index using this plugin?
 No problem! Simply call the `esSynchronise` method on your model to open a mongoose stream and start indexing documents individually.
 
 ```javascript
-var BookSchema = new Schema({
+var BookSchema = new mongoose.Schema({
   title: String
 });
 BookSchema.plugin(mexp);
@@ -259,7 +259,7 @@ You can specify a filter function to index a model to Elasticsearch based on som
 Filtering function must return True for conditions that will be indexing to Elasticsearch (like Array.filter & unlike moogoosastic.filter)
 
 ```javascript
-var MovieSchema = new Schema({
+var MovieSchema = new mongoose.Schema({
   title: {type: String},
   genre: {type: String, enum: ['horror', 'action', 'adventure', 'other']}
 });
@@ -313,7 +313,7 @@ Schemas can be configured to have special options per field. These match with th
 So for example. If you wanted to index a book model and have the boost for title set to 2.0 (giving it greater priority when searching) you'd define it as follows:
 
 ```javascript
-var BookSchema = new Schema({
+var BookSchema = new mongoose.Schema({
     title: {type:String, es_boost:2.0}, 
     author: {type:String, es_null_value: "Unknown Author"}, 
     publicationDate: {type:Date, es_type:'date'} 
@@ -331,7 +331,7 @@ You can do on-demand create a mapping using the `esCreateMapping` function.
 Creating the mapping is a one time operation and can be done as follows:
 
 ```javascript 
-var User = new Schema({
+var User = new mongoose.Schema({
     name: String, 
     email: String, 
     city: String
