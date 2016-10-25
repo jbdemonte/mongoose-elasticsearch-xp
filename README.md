@@ -77,7 +77,7 @@ To have a model indexed into Elasticsearch simply add the plugin.
 var mongoose = require('mongoose'), 
     mexp = require('mongoose-elasticsearch-xp');
 
-var User = new Schema({
+var User = new mongoose.Schema({
     name: String, 
     email: String, 
     city: String
