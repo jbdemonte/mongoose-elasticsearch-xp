@@ -475,4 +475,282 @@ describe("model-mapping", function () {
         done(err);
       });
   });
+
+  it('should handle es_type as "schema"', function (done) {
+
+    var user, city, company;
+
+    var TagSchema = new mongoose.Schema({
+      value: String
+    });
+
+    var CitySchema = new mongoose.Schema({
+      name: String,
+      tags: [TagSchema]
+    });
+
+    var CompanySchema = new mongoose.Schema({
+      name: String,
+      city: {type: mongoose.Schema.Types.ObjectId, ref: 'City'}
+    });
+
+    var UserSchema = new mongoose.Schema({
+      first: String,
+      last: String,
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        es_type: {
+          _id: {
+            es_type: 'string'
+          },
+          name: {
+            es_type: 'string'
+          },
+          city: {
+            es_type: {
+              _id: {
+                es_type: 'string'
+              },
+              name: {
+                es_type: 'string'
+              },
+              tags: {
+                es_type: {
+                  value: {
+                    es_type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    UserSchema.plugin(plugin);
+
+    var TagModel = mongoose.model('Tag', TagSchema);
+    var UserModel = mongoose.model('User', UserSchema);
+    var CompanyModel = mongoose.model('Company', CompanySchema);
+    var CityModel = mongoose.model('City', CitySchema);
+
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        var options = UserModel.esOptions();
+        return options.client.indices.getMapping({
+          index: options.index,
+          type: options.type
+        });
+      })
+      .then(function (mapping) {
+        var properties = mapping.users.mappings.user.properties;
+        expect(properties).to.have.all.keys('first', 'last', 'company');
+        expect(properties.first.type).to.be.equal('string');
+        expect(properties.last.type).to.be.equal('string');
+        expect(properties.company.properties).to.have.all.keys('_id', 'name', 'city');
+        expect(properties.company.properties._id.type).to.be.equal('string');
+        expect(properties.company.properties.name.type).to.be.equal('string');
+        expect(properties.company.properties.city.properties).to.have.all.keys('_id', 'name', 'tags');
+        expect(properties.company.properties.city.properties._id.type).to.be.equal('string');
+        expect(properties.company.properties.city.properties.name.type).to.be.equal('string');
+        expect(properties.company.properties.city.properties.tags.properties).to.have.all.keys('value');
+        expect(properties.company.properties.city.properties.tags.properties.value.type).to.be.equal('string');
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+
+          var tag1 = new TagModel({
+            value: 'nice'
+          });
+          var tag2 = new TagModel({
+            value: 'cool'
+          });
+
+          city = new CityModel({
+            name: 'Poitiers',
+            tags: [tag1, tag2]
+          });
+
+          company = new CompanyModel({
+            name: 'Futuroscope',
+            city: city
+          });
+
+          user = new UserModel({
+            first: 'Maurice',
+            last: 'Moss',
+            company: company
+          });
+
+          user.on('es-indexed', function () {
+            resolve();
+          });
+
+          user.save();
+
+        });
+      })
+      .then(function () {
+        return UserModel.esRefresh();
+      })
+
+      .then(function () {
+        return UserModel.esSearch({
+          query: {match: {"first": "Maurice"}}
+        });
+      })
+      .then(function (result) {
+        expect(result.hits.total).to.eql(1);
+        expect(result.hits.hits[0]._source).to.eql({
+          "first": "Maurice",
+          "last": "Moss",
+          "company": {
+            "_id": company._id.toString(),
+            "name": "Futuroscope",
+            "city": {
+              "_id": city._id.toString(),
+              "name": "Poitiers",
+              "tags": [
+                {"value": "nice"},
+                {"value": "cool"}
+              ]
+            }
+          }
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
+  it('should not be blocked by a non populated "es_type schema"', function (done) {
+
+    var user, city, company;
+
+    var TagSchema = new mongoose.Schema({
+      value: String
+    });
+
+    var CitySchema = new mongoose.Schema({
+      name: String,
+      tags: [TagSchema]
+    });
+
+    var CompanySchema = new mongoose.Schema({
+      name: String,
+      city: {type: mongoose.Schema.Types.ObjectId, ref: 'City'}
+    });
+
+    var UserSchema = new mongoose.Schema({
+      first: String,
+      last: String,
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        es_type: {
+          _id: {
+            es_type: 'string'
+          },
+          name: {
+            es_type: 'string'
+          },
+          city: {
+            es_type: {
+              _id: {
+                es_type: 'string'
+              },
+              name: {
+                es_type: 'string'
+              },
+              tags: {
+                es_type: {
+                  value: {
+                    es_type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    UserSchema.plugin(plugin);
+
+    var TagModel = mongoose.model('Tag', TagSchema);
+    var UserModel = mongoose.model('User', UserSchema);
+    var CompanyModel = mongoose.model('Company', CompanySchema);
+    var CityModel = mongoose.model('City', CitySchema);
+
+
+    utils.deleteModelIndexes(UserModel)
+      .then(function () {
+        return UserModel.esCreateMapping();
+      })
+      .then(function () {
+        return new utils.Promise(function (resolve, reject) {
+
+          var tag1 = new TagModel({
+            value: 'nice'
+          });
+          var tag2 = new TagModel({
+            value: 'cool'
+          });
+
+          city = new CityModel({
+            name: 'Poitiers',
+            tags: [tag1, tag2]
+          });
+
+          company = new CompanyModel({
+            name: 'Futuroscope',
+            city: city
+          });
+
+          user = new UserModel({
+            first: 'Maurice',
+            last: 'Moss',
+            company: company._id
+          });
+
+          user.on('es-indexed', function () {
+            resolve();
+          });
+
+          user.save();
+
+        });
+      })
+      .then(function () {
+        return UserModel.esRefresh();
+      })
+
+      .then(function () {
+        return UserModel.esSearch({
+          query: {match: {"first": "Maurice"}}
+        });
+      })
+      .then(function (result) {
+        expect(result.hits.total).to.eql(1);
+        expect(result.hits.hits[0]._source).to.eql({
+          "first": "Maurice",
+          "last": "Moss"
+        });
+      })
+      .then(function () {
+        done();
+      })
+      .catch(function (err) {
+        done(err);
+      });
+  });
+
 });

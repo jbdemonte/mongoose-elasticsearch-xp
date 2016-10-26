@@ -11,7 +11,8 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 - [Setup](#setup)
 - [Indexing](#indexing)
   - [Saving a document](#saving-a-document)
-  - [Indexing nested models](#indexing-nested-models)
+  - [Indexing Nested Models](#indexing-nested-models)
+  - [Indexing Populated Models](#indexing-populated-models)
   - [Indexing an existing collection](#indexing-an-existing-collection)
   - [Filtered indexing](#filtered-indexing)
   - [Indexing on demand](#indexing-on-demand)
@@ -96,7 +97,7 @@ This can be a little wasteful especially considering that the document is now ju
 
 ```javascript
 var User = new mongoose.Schema({
-    name: {type:String, es_indexed:true}, 
+    name: {type: String, es_indexed: true}, 
     email: String, 
     city: String
 });
@@ -154,8 +155,8 @@ To connect to more than one host, you can use an array of hosts.
 ```javascript
 MyModel.plugin(mexp, {
   hosts: [
-    'localhost:9200',
-    'anotherhost:9200'
+    'localhost: 9200',
+    'anotherhost: 9200'
   ]
 })
 ```
@@ -163,7 +164,7 @@ MyModel.plugin(mexp, {
 Also, you can re-use an existing Elasticsearch `Client` instance
 
 ```javascript
-var esClient = new elasticsearch.Client({host: 'localhost:9200'});
+var esClient = new elasticsearch.Client({host: 'localhost: 9200'});
 
 MyModel.plugin(mexp, {
   client: esClient
@@ -201,14 +202,67 @@ var Comment = new mongoose.Schema({
 });
 
 var User = new mongoose.Schema({
-    name: {type:String, es_indexed:true}, 
+    name: {type: String, es_indexed: true}, 
     email: String, 
     city: String, 
-    comments: {type:[Comment], es_indexed:true}
+    comments: {type: [Comment], es_indexed: true}
 });
 
 User.plugin(mexp);
 ```
+
+
+###Indexing Populated Models
+To index populated models (`ref` model), it is mandatory to provide a schema to explain what to index in the `es_type` key.
+**This plugin will never populate** models by its own, **you have to populate** the models.
+
+```javascript
+var Country = new mongoose.Schema({
+    name: String,
+    code: String
+});
+
+var City = new mongoose.Schema({
+    name: String,
+    pos: {
+        type: [Number],
+        index: '2dsphere'
+    },
+    country: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Country'
+    }
+});
+
+var User = new mongoose.Schema({
+    name: String, 
+    city: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'City', 
+        es_type: {
+            name: {
+                es_type: 'string'
+            },
+            pos: {
+                es_type: 'geo_point'
+            },
+            country: {
+                es_type: {
+                    name: {
+                        es_type: 'string'
+                    },
+                    code: {
+                        es_type: 'string'
+                    }
+                }
+            }
+        }
+    }
+});
+
+User.plugin(mexp);
+```
+
 
 ### Indexing An Existing Collection
 Already have a mongodb collection that you'd like to index using this plugin? 
@@ -279,7 +333,7 @@ You can do on-demand indexes using the `esIndex` function
 `esIndex([update], [callback])`
 
 ```javascript
-Dude.findOne({name:'Jeffrey Lebowski', function (err, dude) {
+Dude.findOne({name: 'Jeffrey Lebowski', function (err, dude) {
   dude.awesome = true;
   dude.esIndex(function (err, res) {
     console.log("egads! I've been indexed!");
@@ -297,7 +351,7 @@ mongodb. Use save for that.
 By default, inline scripts are disabled in Elasticsearch. In this case, unsetting fields result in setting fields to `null`.
 
 ```javascript
-Dude.findOne({name:'Jeffrey Lebowski', function (err, dude) {
+Dude.findOne({name: 'Jeffrey Lebowski', function (err, dude) {
   dude.job = undefined;
   dude.save(); // => job fields will be set to null on Elasticsearch
 });
@@ -314,9 +368,9 @@ So for example. If you wanted to index a book model and have the boost for title
 
 ```javascript
 var BookSchema = new mongoose.Schema({
-    title: {type:String, es_boost:2.0}, 
-    author: {type:String, es_null_value: "Unknown Author"}, 
-    publicationDate: {type:Date, es_type:'date'} 
+    title: {type: String, es_boost: 2.0}, 
+    author: {type: String, es_null_value: "Unknown Author"}, 
+    publicationDate: {type: Date, es_type: 'date'} 
 }); 
 
 ```
@@ -342,10 +396,10 @@ User.plugin(mexp);
 User
   .esCreateMapping({
     "analysis" : {
-      "analyzer":{
-        "content":{
-          "type":"custom",
-          "tokenizer":"whitespace"
+      "analyzer": {
+        "content": {
+          "type": "custom",
+          "tokenizer": "whitespace"
         }
       }
     }
@@ -367,8 +421,8 @@ For example, if you wanted to find all people between ages 21 and 30:
 Person
   .esSearch({
     range: {
-      age:{
-        from:21, 
+      age: {
+        from: 21, 
         to: 30
       }
     }
@@ -400,11 +454,11 @@ Person
 By default objects returned from performing a search will be the objects as is in Elasticsearch. 
 This is useful in cases where only what was indexed needs to be displayed (think a list of results) while the actual mongoose object contains the full data when viewing one of the results.
 
-However, if you want the results to be actual mongoose objects you can provide {hydrate:true} as the second argument to a search call.
+However, if you want the results to be actual mongoose objects you can provide {hydrate: true} as the second argument to a search call.
 
 ```javascript
 User
-  .esSearch({query_string: {query: "john"}}, {hydrate:true})
+  .esSearch({query_string: {query: "john"}}, {hydrate: true})
   .then(function (results) {
   // results here
   });
