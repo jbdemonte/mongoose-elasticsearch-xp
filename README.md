@@ -17,6 +17,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Filtered indexing](#filtered-indexing)
   - [Indexing on demand](#indexing-on-demand)
   - [Unsetting fields](#unsetting-fields)
+  - [Cast fields](#cast-fields)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Queries](#queries)
@@ -358,6 +359,57 @@ Dude.findOne({name: 'Jeffrey Lebowski', function (err, dude) {
 ```
 
 If [dynamic-scripting](https://www.elastic.co/guide/en/elasticsearch/reference/2.3/modules-scripting.html#enable-dynamic-scripting) is enabled, setting `script` to true will use `ctx._source.remove` and fields will be removed in Elasticsearch.
+
+
+### Cast fields
+`es_cast` allows to cast a field into another format.
+If the type changes, it is mandatory to set the `es_type`.
+ 
+```javascript
+var TagSchema = new mongoose.Schema({
+  _id: false,
+  value: String
+});
+
+var UserSchema = new mongoose.Schema({
+  name: String,
+  tags: {
+    type: [TagSchema],
+    es_type: 'string',          // <= because the type change from a TagSchema (object) to an array of string
+    es_cast: function (tags) {
+      return tags.map(function (tag) {
+        return tag.value;
+      });
+    }
+  }
+});
+
+UserSchema.plugin(plugin);
+
+var UserModel = mongoose.model('User', UserSchema);
+
+var john = new UserModel({
+  name: 'John',
+  tags: [
+    {value: 'cool'},
+    {value: 'green'}
+  ]
+});
+
+// users index will contain {"name": "John", "tags": ["cool", "green"]}
+
+```
+
+The `es_cast` parameter expect a function with theses parameters:
+
+* `value` contains the value to cast
+* `context` is an object
+
+context contains:
+
+* `document` is the mongoose document
+* `container` is the container of the value to cast (which is equal to the `document` when is not a nested object)
+* `field` is key name
 
 
 ## Mapping
