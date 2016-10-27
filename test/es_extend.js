@@ -2,7 +2,7 @@ var utils = require('./utils');
 var mongoose = require('mongoose');
 var plugin = require('../');
 
-describe("es_fields", function () {
+describe("es_extend", function () {
 
   utils.setup();
 
@@ -13,7 +13,7 @@ describe("es_fields", function () {
         name: String
       },
       {
-        es_fields: {
+        es_extend: {
           num: {
             es_type: 'integer',
             es_value: 123

@@ -363,7 +363,7 @@ If [dynamic-scripting](https://www.elastic.co/guide/en/elasticsearch/reference/2
 
 
 ### Adding fields
-`es_fields` allows to add some fields which does not exist in the mongoose schema. 
+`es_extend` allows to add some fields which does not exist in the mongoose schema. 
 It is defined in the options of the schema definition.
 When adding some fields, `es_type` and `es_value` are mandatories.
 
@@ -373,7 +373,7 @@ var UserSchema = new mongoose.Schema(
     name: String
   },
   {
-    es_fields: {
+    es_extend: {
       length: {
         es_type: 'integer',
         es_value: function (document) {
