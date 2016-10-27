@@ -18,7 +18,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Indexing on demand](#indexing-on-demand)
   - [Unsetting fields](#unsetting-fields)
   - [Adding fields](#adding-fields)
-  - [Cast fields](#cast-fields)
+  - [Change fields value](#change-fields-value)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Queries](#queries)
@@ -389,9 +389,9 @@ The `es_value` parameter can be either a value or a function returning a value, 
 
 * `document` is the mongoose document
 
-### Cast fields
-`es_cast` allows to cast a field into another format.
-If the type changes, it is mandatory to set the `es_type`.
+### Change fields value
+`es_value` allows to replace the value of a field. It can be either a value or a function which will return the value to index.
+If the type changes, it is mandatory to set the correct `es_type`.
  
 ```javascript
 var TagSchema = new mongoose.Schema({
@@ -401,10 +401,14 @@ var TagSchema = new mongoose.Schema({
 
 var UserSchema = new mongoose.Schema({
   name: String,
+  xyz: {
+    type: Number,
+    es_value: 123               // <= whatever the model.xyz value is, the xyz indexed will be 123 in ES 
+  },
   tags: {
     type: [TagSchema],
     es_type: 'string',          // <= because the type change from a TagSchema (object) to an array of string
-    es_cast: function (tags) {
+    es_value: function (tags) {
       return tags.map(function (tag) {
         return tag.value;
       });
@@ -424,20 +428,20 @@ var john = new UserModel({
   ]
 });
 
-// users index will contain {"name": "John", "tags": ["cool", "green"]}
+// users index will contain {"name": "John", "xyz": 123, "tags": ["cool", "green"]}
 
 ```
 
-The `es_cast` parameter expect a function with theses parameters:
+When `es_value` is a function, it takes theses parameters:
 
-* `value` contains the value to cast
-* `context` is an object
+* `value` the original value
+* `context` a context object
 
 context contains:
 
-* `document` is the mongoose document
-* `container` is the container of the value to cast (which is equal to the `document` when is not a nested object)
-* `field` is key name
+* `document` the mongoose document
+* `container` the container of the original value (which is equal to the `document` when it is not a nested object)
+* `field` the key name
 
 
 ## Mapping
