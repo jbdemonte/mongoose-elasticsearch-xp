@@ -17,6 +17,7 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
   - [Filtered indexing](#filtered-indexing)
   - [Indexing on demand](#indexing-on-demand)
   - [Unsetting fields](#unsetting-fields)
+  - [Adding fields](#adding-fields)
   - [Cast fields](#cast-fields)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
@@ -360,6 +361,33 @@ Dude.findOne({name: 'Jeffrey Lebowski', function (err, dude) {
 
 If [dynamic-scripting](https://www.elastic.co/guide/en/elasticsearch/reference/2.3/modules-scripting.html#enable-dynamic-scripting) is enabled, setting `script` to true will use `ctx._source.remove` and fields will be removed in Elasticsearch.
 
+
+### Adding fields
+`es_fields` allows to add some fields which does not exist in the mongoose schema. 
+It is defined in the options of the schema definition.
+When adding some fields, `es_type` and `es_value` are mandatories.
+
+```javascript
+var UserSchema = new mongoose.Schema(
+  {
+    name: String
+  },
+  {
+    es_fields: {
+      length: {
+        es_type: 'integer',
+        es_value: function (document) {
+          return document.name.length;
+        }
+      }
+    }
+  }
+);
+```
+
+The `es_value` parameter can be either a value or a function returning a value, in this case, here are its parameter:
+
+* `document` is the mongoose document
 
 ### Cast fields
 `es_cast` allows to cast a field into another format.
