@@ -1,8 +1,8 @@
-var utils = require('./utils');
+var utils = require('../utils');
 var mongoose = require('mongoose');
-var plugin = require('../');
+var plugin = require('../../').v2;
 
-describe("esCount", function () {
+describe("esSearch", function () {
 
   utils.setup();
 
@@ -59,9 +59,12 @@ describe("esCount", function () {
   it('should handle a lucene query', function (done) {
     var self = this;
     self.model
-      .esCount('name:jane')
+      .esSearch('name:jane')
       .then(function (result) {
-        expect(result.count).to.eql(1);
+        expect(result.hits.total).to.eql(1);
+        var hit = result.hits.hits[0];
+        expect(hit._id).to.eql(self.users.jane._id.toString());
+        expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
       })
       .catch(function (err) {
@@ -71,11 +74,29 @@ describe("esCount", function () {
 
   it('should accept callback', function (done) {
     var self = this;
-    var returned = self.model.esCount('name:jane', function (err, result) {
+    var returned = self.model.esSearch('name:jane', {}, function (err, result) {
       if (err) {
         return done(err);
       }
-      expect(result.count).to.eql(1);
+      expect(result.hits.total).to.eql(1);
+      var hit = result.hits.hits[0];
+      expect(hit._id).to.eql(self.users.jane._id.toString());
+      expect(hit._source).to.eql({name: 'Jane', age: 34});
+      expect(returned).to.be.undefined;
+      done();
+    });
+  });
+
+  it('should accept callback without options', function (done) {
+    var self = this;
+    var returned = self.model.esSearch('name:jane', function (err, result) {
+      if (err) {
+        return done(err);
+      }
+      expect(result.hits.total).to.eql(1);
+      var hit = result.hits.hits[0];
+      expect(hit._id).to.eql(self.users.jane._id.toString());
+      expect(hit._source).to.eql({name: 'Jane', age: 34});
       expect(returned).to.be.undefined;
       done();
     });
@@ -84,9 +105,12 @@ describe("esCount", function () {
   it('should handle a full query', function (done) {
     var self = this;
     self.model
-      .esCount({query: {match_all: {}}, filter: {range: {age: {lt: 35}}}})
+      .esSearch({query: {match_all: {}}, filter: {range: {age: {lt: 35}}}})
       .then(function (result) {
-        expect(result.count).to.eql(1);
+        expect(result.hits.total).to.eql(1);
+        var hit = result.hits.hits[0];
+        expect(hit._id).to.eql(self.users.jane._id.toString());
+        expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
       })
       .catch(function (err) {
@@ -97,9 +121,12 @@ describe("esCount", function () {
   it('should handle a short query', function (done) {
     var self = this;
     self.model
-      .esCount({match: {age: 34}})
+      .esSearch({match: {age: 34}})
       .then(function (result) {
-        expect(result.count).to.eql(1);
+        expect(result.hits.total).to.eql(1);
+        var hit = result.hits.hits[0];
+        expect(hit._id).to.eql(self.users.jane._id.toString());
+        expect(hit._source).to.eql({name: 'Jane', age: 34});
         done();
       })
       .catch(function (err) {
@@ -110,9 +137,9 @@ describe("esCount", function () {
   it('should handle 0 hit', function (done) {
     var self = this;
     self.model
-      .esCount({match: {age: 100}})
+      .esSearch({match: {age: 100}})
       .then(function (result) {
-        expect(result.count).to.eql(0);
+        expect(result.hits.total).to.eql(0);
         done();
       })
       .catch(function (err) {

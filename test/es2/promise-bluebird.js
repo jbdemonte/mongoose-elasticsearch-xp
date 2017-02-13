@@ -1,8 +1,8 @@
 var bluebird = require('bluebird');
-var utils = require('./utils');
+var utils = require('../utils');
 var mongoose = require('mongoose');
 
-var plugin = require('../');
+var plugin = require('../../').v2;
 
 describe("promise-bluebird", function () {
 

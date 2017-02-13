@@ -5,7 +5,7 @@ var Bulker = require('./lib/bulker');
 var mongoose = require('mongoose');
 
 
-module.exports = function (schema, options) {
+module.exports = function (schema, options, version) {
   // clone main level of options (does not clone deeper)
   options = utils.highClone(options);
 
@@ -36,7 +36,7 @@ module.exports = function (schema, options) {
 
     if (!options.mapping) {
       options.mapping = Object.freeze({
-        properties: generateMapping(this.schema)
+        properties: generateMapping(this.schema, version)
       });
     }
 
@@ -63,6 +63,9 @@ module.exports = function (schema, options) {
   schema.post('findOneAndRemove', postRemove);
 };
 
+module.exports.v2 = function (schema, options) {
+  return module.exports(schema, options, 2);
+};
 
 /**
  * Map the model on ElasticSearch
@@ -144,8 +147,7 @@ function refresh(options, callback) {
     var esOptions = self.esOptions();
     var refreshDelay = options.refreshDelay === false ? 0 : options.refreshDelay || esOptions.refreshDelay;
     esOptions.client.indices.refresh({
-      index: esOptions.index,
-      type: esOptions.type
+      index: esOptions.index
     },
     function (err, result) {
       setTimeout(function () {

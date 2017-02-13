@@ -1,6 +1,6 @@
-var utils = require('./utils');
+var utils = require('../utils');
 var mongoose = require('mongoose');
-var plugin = require('../');
+var plugin = require('../../').v2;
 
 describe("hydratation", function () {
 
