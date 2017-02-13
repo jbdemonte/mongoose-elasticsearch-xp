@@ -3,7 +3,7 @@
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][coverage-image]][coverage-url]
 
 mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that can automatically index your models into [elasticsearch](http://www.elasticsearch.org/).
-
+This plugin is compatible with Elasticsearch version 2 and 5.
 
 - [Prerequisite](#prerequisite)
 - [Why this plugin?](#why-this-plugin)
@@ -30,7 +30,10 @@ mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that ca
 
 ## Prerequisite
 
-mongoose-elasticsearch-xp requires mongoose 4.2.2 or later.
+mongoose-elasticsearch-xp requires:
+
+  - mongoose 4.2.2 or later
+  - elasticsearch 2.0 or later
 
 ## Why this plugin?
 
@@ -45,6 +48,17 @@ The latest version of this package will be as close as possible to the latest `e
 ```bash
 npm install --save mongoose-elasticsearch-xp
 ```
+
+## Important
+
+This plugin is configured to work with the latest version (5.x.y).
+In order to use it with Elasticsearch 2.x.y, you need to use the `v2` version:
+
+```javascript
+var mexp = require('mongoose-elasticsearch-xp').v2;
+```
+
+The examples below use the version 5 syntax.
 
 ## Limitation
 
@@ -77,16 +91,18 @@ Options are:
 To have a model indexed into Elasticsearch simply add the plugin.
 
 ```javascript
-var mongoose = require('mongoose'), 
-    mexp = require('mongoose-elasticsearch-xp');
+var mongoose = require('mongoose');
+var mexp = require('mongoose-elasticsearch-xp');
 
-var User = new mongoose.Schema({
+var UserSchema = new mongoose.Schema({
     name: String, 
     email: String, 
     city: String
 });
 
-User.plugin(mexp);
+UserSchema.plugin(mexp);
+
+var User = mongoose.model('User', UserSchema);
 ```
 
 This will by default simply use the collection name as the index while using the model name itself as the type. 
@@ -98,13 +114,15 @@ This can be a little wasteful especially considering that the document is now ju
 
 
 ```javascript
-var User = new mongoose.Schema({
+var UserSchema = new mongoose.Schema({
     name: {type: String, es_indexed: true}, 
     email: String, 
     city: String
 });
 
-User.plugin(mexp);
+UserSchema.plugin(mexp);
+
+var User = mongoose.model('User', UserSchema);
 ```
 
 In this case only the name field will be indexed for searching.
@@ -129,12 +147,14 @@ The `esSearch` also handle the full Elasticsearch ...
 ```javascript
 User
   .esSearch({
-    query: {
-      match_all: {}
-    }, 
-    filter: {
-      range: {
-        age: {lt: 35}
+    bool: {
+      must: {
+        match_all: {}
+      },
+      filter: {
+        range: {
+          age: {lt: 35}
+        }
       }
     }
   })
@@ -197,20 +217,22 @@ doc.save(function (err) {
 In order to index nested models you can refer following example.
 
 ```javascript
-var Comment = new mongoose.Schema({
+var CommentSchema = new mongoose.Schema({
     title: String, 
     body: String, 
     author: String
 });
 
-var User = new mongoose.Schema({
+var UserSchema = new mongoose.Schema({
     name: {type: String, es_indexed: true}, 
     email: String, 
     city: String, 
-    comments: {type: [Comment], es_indexed: true}
+    comments: {type: [CommentSchema], es_indexed: true}
 });
 
-User.plugin(mexp);
+UserSchema.plugin(mexp);
+
+var User = mongoose.model('User', UserSchema);
 ```
 
 
@@ -219,12 +241,14 @@ To index populated models (`ref` model), it is mandatory to provide a schema to 
 **This plugin will never populate** models by its own, **you have to populate** the models.
 
 ```javascript
-var Country = new mongoose.Schema({
+var CountrySchema = new mongoose.Schema({
     name: String,
     code: String
 });
 
-var City = new mongoose.Schema({
+var Country = mongoose.model('Country', CountrySchema);
+
+var CitySchema = new mongoose.Schema({
     name: String,
     pos: {
         type: [Number],
@@ -236,7 +260,9 @@ var City = new mongoose.Schema({
     }
 });
 
-var User = new mongoose.Schema({
+var City = mongoose.model('City', CitySchema);
+
+var UserSchema = new mongoose.Schema({
     name: String, 
     city: {
         type: mongoose.Schema.Types.ObjectId, 
@@ -262,7 +288,9 @@ var User = new mongoose.Schema({
     }
 });
 
-User.plugin(mexp);
+UserSchema.plugin(mexp);
+
+var User = mongoose.model('User', UserSchema);
 ```
 
 
@@ -274,6 +302,7 @@ No problem! Simply call the `esSynchronise` method on your model to open a mongo
 var BookSchema = new mongoose.Schema({
   title: String
 });
+
 BookSchema.plugin(mexp);
 
 var Book = mongoose.model('Book', BookSchema);
@@ -320,7 +349,7 @@ var MovieSchema = new mongoose.Schema({
   genre: {type: String, enum: ['horror', 'action', 'adventure', 'other']}
 });
 
-MovieSchema.plugin(mongoosastic, {
+MovieSchema.plugin(mexp, {
   filter: function (doc) {
     return doc.genre === 'action';
   }
@@ -418,9 +447,9 @@ var UserSchema = new mongoose.Schema({
 
 UserSchema.plugin(plugin);
 
-var UserModel = mongoose.model('User', UserSchema);
+var User = mongoose.model('User', UserSchema);
 
-var john = new UserModel({
+var john = new User({
   name: 'John',
   tags: [
     {value: 'cool'},
@@ -469,13 +498,15 @@ You can do on-demand create a mapping using the `esCreateMapping` function.
 Creating the mapping is a one time operation and can be done as follows:
 
 ```javascript 
-var User = new mongoose.Schema({
+var UserSchema = new mongoose.Schema({
     name: String, 
     email: String, 
     city: String
 });
 
-User.plugin(mexp);
+UserSchema.plugin(mexp);
+
+var User = mongoose.model('User', UserSchema);
 
 User
   .esCreateMapping({
@@ -523,11 +554,18 @@ You can also specify full query:
 ```javascript
 Person
   .esSearch({
-    query: {match_all: {}},
-    sort: [
-      {age: {order: "desc"}}
-    ],
-    filter: {range: {age: {gte: 35}}}
+    {
+      query: {
+        bool: {
+          must: {match_all: {}},
+          filter: {range: {age: {gte: 35}}}
+        }
+      },
+      sort: [
+        {age: {order: "desc"}}
+      ]
+    }
+
   })
   .then(function (results) {
     // ...
@@ -609,8 +647,10 @@ Count result can be simplified to the count value using the `countOnly` options 
 User
   .esCount(
     {
-      query: {match_all: {}},
-      filter: {range: {age: {gte: 35}}}
+      bool: {
+        must: {match_all: {}},
+        filter: {range: {age: {gte: 35}}}
+      }
     },
     {countOnly: true}
   )
