@@ -4,16 +4,30 @@ node_js:
   - 0.11.14
   - stable
 
+addons:
+  apt:
+    packages:
+      - oracle-java8-set-default
+
 services:
   - mongodb
 
+env:
+  - ES=2
+  - ES=5
+
 before_install:
-  - curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb
+  - if [ "$ES" -eq "2" ]; then echo "DOWNLOADING V2"; curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb ; fi
+  - if [ "$ES" -eq "5" ]; then echo "DOWNLOADING V5"; curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.0.0.deb && sudo dpkg -i --force-confnew elasticsearch-5.0.0.deb ; fi
   - 'echo "script.inline: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
-  - cat /etc/elasticsearch/elasticsearch.yml
+  - sudo cat /etc/elasticsearch/elasticsearch.yml
   - sudo service elasticsearch start
-  - sleep 3
+  - sleep 5
   - sudo service elasticsearch status
 
-script: "npm run-script test-covered"
-after_script: "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+script:
+  - if [ "$ES" -eq "2" ]; then echo "RUNNING V2"; npm run-script test-v2-covered ; fi
+  - if [ "$ES" -eq "5" ]; then echo "RUNNING V5"; npm run-script test-v5-covered ; fi
+
+
+after_success: cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
