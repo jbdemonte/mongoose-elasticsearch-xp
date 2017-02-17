@@ -1,12 +1,11 @@
 {
   "name": "mongoose-elasticsearch-xp",
-  "version": "2.5.0",
-  "description": "A mongoose plugin that indexes models into elastic search (an alternative to mongoosastic)",
+  "version": "5.0.0",
+  "description": "A mongoose plugin that indexes models into Elasticsearch 2 / 5 (an alternative to mongoosastic)",
   "tags": [
+    "elasticsearch",
     "mongodb",
     "mongoose",
-    "elasticsearch",
-    "elastic search",
     "mongoosastic",
     "auto index",
     "full text search",
