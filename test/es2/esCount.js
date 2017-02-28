@@ -41,11 +41,29 @@ describe('esCount', function() {
           {
             refresh: true,
             body: [
-              { index: { _index: options.index, _type: options.type, _id: john._id.toString() } },
+              {
+                index: {
+                  _index: options.index,
+                  _type: options.type,
+                  _id: john._id.toString(),
+                },
+              },
               { name: 'John', age: 35 },
-              { index: { _index: options.index, _type: options.type, _id: jane._id.toString() } },
+              {
+                index: {
+                  _index: options.index,
+                  _type: options.type,
+                  _id: jane._id.toString(),
+                },
+              },
               { name: 'Jane', age: 34 },
-              { index: { _index: options.index, _type: options.type, _id: bob._id.toString() } },
+              {
+                index: {
+                  _index: options.index,
+                  _type: options.type,
+                  _id: bob._id.toString(),
+                },
+              },
               { name: 'Bob', age: 36 },
             ],
           },
@@ -84,7 +102,10 @@ describe('esCount', function() {
   it('should handle a full query', function(done) {
     var self = this;
     self.model
-      .esCount({ query: { match_all: {} }, filter: { range: { age: { lt: 35 } } } })
+      .esCount({
+        query: { match_all: {} },
+        filter: { range: { age: { lt: 35 } } },
+      })
       .then(function(result) {
         expect(result.count).to.eql(1);
         done();

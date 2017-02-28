@@ -91,7 +91,11 @@ describe('es_value', function() {
         var options = UserModel.esOptions();
         var client = options.client;
         client.search(
-          { index: options.index, type: options.type, body: { query: { match_all: {} } } },
+          {
+            index: options.index,
+            type: options.type,
+            body: { query: { match_all: {} } },
+          },
           function(err, resp) {
             expect(resp.hits.total).to.eql(1);
             var hit = resp.hits.hits[0];
@@ -174,7 +178,10 @@ describe('es_value', function() {
           {
             index: options.index,
             type: options.type,
-            body: { query: { match_all: {} }, sort: [{ name: { order: 'desc' } }] },
+            body: {
+              query: { match_all: {} },
+              sort: [{ name: { order: 'desc' } }],
+            },
           },
           function(err, resp) {
             expect(resp.hits.total).to.eql(2);

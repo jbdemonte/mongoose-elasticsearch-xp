@@ -22,7 +22,13 @@ describe('model-mapping', function() {
           analyzer: {
             custom_french_analyzer: {
               tokenizer: 'letter',
-              filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+              filter: [
+                'asciifolding',
+                'lowercase',
+                'french_stem',
+                'elision',
+                'stop',
+              ],
             },
             tag_analyzer: {
               tokenizer: 'keyword',
@@ -51,7 +57,13 @@ describe('model-mapping', function() {
         expect(analysis.analyzer).to.eql({
           custom_french_analyzer: {
             tokenizer: 'letter',
-            filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+            filter: [
+              'asciifolding',
+              'lowercase',
+              'french_stem',
+              'elision',
+              'stop',
+            ],
           },
           tag_analyzer: {
             tokenizer: 'keyword',
@@ -108,7 +120,13 @@ describe('model-mapping', function() {
             analyzer: {
               custom_french_analyzer: {
                 tokenizer: 'letter',
-                filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+                filter: [
+                  'asciifolding',
+                  'lowercase',
+                  'french_stem',
+                  'elision',
+                  'stop',
+                ],
               },
               tag_analyzer: {
                 tokenizer: 'keyword',
@@ -129,7 +147,13 @@ describe('model-mapping', function() {
         expect(analysis.analyzer).to.eql({
           custom_french_analyzer: {
             tokenizer: 'letter',
-            filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+            filter: [
+              'asciifolding',
+              'lowercase',
+              'french_stem',
+              'elision',
+              'stop',
+            ],
           },
           tag_analyzer: {
             tokenizer: 'keyword',
@@ -230,8 +254,12 @@ describe('model-mapping', function() {
         expect(properties.embedded.properties).to.have.all.keys('deep', 'key');
         expect(properties.embedded.properties.key.type).to.be.equal('string');
 
-        expect(properties.embedded.properties.deep.properties).to.have.all.keys('dn');
-        expect(properties.embedded.properties.deep.properties.dn.type).to.be.equal('double');
+        expect(properties.embedded.properties.deep.properties).to.have.all.keys(
+          'dn'
+        );
+        expect(
+          properties.embedded.properties.deep.properties.dn.type
+        ).to.be.equal('double');
 
         done();
       })
@@ -293,15 +321,24 @@ describe('model-mapping', function() {
       })
       .then(function(mapping) {
         var properties = mapping.users.mappings.user.properties;
-        expect(properties).to.have.all.keys('name', 'tags', 'optin', 'embedded2');
+        expect(properties).to.have.all.keys(
+          'name',
+          'tags',
+          'optin',
+          'embedded2'
+        );
         expect(properties.name.type).to.be.equal('string');
         expect(properties.tags.type).to.be.equal('string');
         expect(properties.optin.type).to.be.equal('boolean');
 
         expect(properties.embedded2.properties).to.have.all.keys('deep1');
 
-        expect(properties.embedded2.properties.deep1.properties).to.have.all.keys('dn');
-        expect(properties.embedded2.properties.deep1.properties.dn.type).to.be.equal('double');
+        expect(
+          properties.embedded2.properties.deep1.properties
+        ).to.have.all.keys('dn');
+        expect(
+          properties.embedded2.properties.deep1.properties.dn.type
+        ).to.be.equal('double');
         done();
       })
       .catch(function(err) {
@@ -340,7 +377,13 @@ describe('model-mapping', function() {
       })
       .then(function(mapping) {
         var properties = mapping.users.mappings.user.properties;
-        expect(properties).to.have.all.keys('name', 'age', 'joined', 'optin', 'pos');
+        expect(properties).to.have.all.keys(
+          'name',
+          'age',
+          'joined',
+          'optin',
+          'pos'
+        );
         expect(properties.name.type).to.be.equal('string');
         expect(properties.name.boost).to.be.equal(2);
         expect(properties.age.type).to.be.equal('integer');
@@ -554,7 +597,11 @@ describe('model-mapping', function() {
         expect(properties).to.have.all.keys('first', 'last', 'company');
         expect(properties.first.type).to.be.equal('string');
         expect(properties.last.type).to.be.equal('string');
-        expect(properties.company.properties).to.have.all.keys('_id', 'name', 'city');
+        expect(properties.company.properties).to.have.all.keys(
+          '_id',
+          'name',
+          'city'
+        );
         expect(properties.company.properties._id.type).to.be.equal('string');
         expect(properties.company.properties.name.type).to.be.equal('string');
         expect(properties.company.properties.city.properties).to.have.all.keys(
@@ -562,11 +609,15 @@ describe('model-mapping', function() {
           'name',
           'tags'
         );
-        expect(properties.company.properties.city.properties._id.type).to.be.equal('string');
-        expect(properties.company.properties.city.properties.name.type).to.be.equal('string');
-        expect(properties.company.properties.city.properties.tags.properties).to.have.all.keys(
-          'value'
-        );
+        expect(
+          properties.company.properties.city.properties._id.type
+        ).to.be.equal('string');
+        expect(
+          properties.company.properties.city.properties.name.type
+        ).to.be.equal('string');
+        expect(
+          properties.company.properties.city.properties.tags.properties
+        ).to.have.all.keys('value');
         expect(
           properties.company.properties.city.properties.tags.properties.value.type
         ).to.be.equal('string');
@@ -635,7 +686,9 @@ describe('model-mapping', function() {
       });
   });
 
-  it('should not be blocked by a non populated "es_type schema"', function(done) {
+  it('should not be blocked by a non populated "es_type schema"', function(
+    done
+  ) {
     var user, city, company;
 
     var TagSchema = new mongoose.Schema({

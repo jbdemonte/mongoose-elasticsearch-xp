@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('countOnly', function() {
   utils.setup();
 
-  beforeEach(function(done) {
+  beforeEach(function() {
     var UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -26,7 +26,7 @@ describe('countOnly', function() {
       bob: bob,
     };
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -43,14 +43,11 @@ describe('countOnly', function() {
       })
       .then(function() {
         return UserModel.esRefresh();
-      })
-      .then(function() {
-        done();
       });
   });
 
-  it('should return count', function(done) {
-    this.model
+  it('should return count', function() {
+    return this.model
       .esCount(
         {
           bool: {
@@ -62,15 +59,11 @@ describe('countOnly', function() {
       )
       .then(function(count) {
         expect(count).to.eql(2);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should return 0', function(done) {
-    this.model
+  it('should return 0', function() {
+    return this.model
       .esCount(
         {
           bool: {
@@ -82,14 +75,10 @@ describe('countOnly', function() {
       )
       .then(function(count) {
         expect(count).to.eql(0);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should return count when defined in plugin', function(done) {
+  it('should return count when defined in plugin', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -101,7 +90,7 @@ describe('countOnly', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.esCount({
+    return UserModel.esCount({
         bool: {
           must: { match_all: {} },
           filter: { range: { age: { gte: 35 } } },
@@ -109,14 +98,10 @@ describe('countOnly', function() {
       })
       .then(function(count) {
         expect(count).to.eql(2);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should overwrite defined in plugin value', function(done) {
+  it('should overwrite defined in plugin value', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -128,7 +113,7 @@ describe('countOnly', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.esCount(
+    return UserModel.esCount(
         {
           bool: {
             must: { match_all: {} },
@@ -139,10 +124,6 @@ describe('countOnly', function() {
       )
       .then(function(result) {
         expect(result.count).to.eql(2);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });

@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('esRemove', function() {
   utils.setup();
 
-  it('should be removed', function(done) {
+  it('should be removed', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -19,35 +19,42 @@ describe('esRemove', function() {
     var jane = new UserModel({ name: 'Jane', age: 34 });
     var bob = new UserModel({ name: 'Bob', age: 36 });
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
       })
       .then(function() {
-        return new utils.Promise(function(resolve, reject) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.bulk(
+        var options = UserModel.esOptions();
+        var client = options.client;
+        return client.bulk({
+          refresh: true,
+          body: [
             {
-              refresh: true,
-              body: [
-                { index: { _index: options.index, _type: options.type, _id: john._id.toString() } },
-                { name: 'John', age: 35 },
-                { index: { _index: options.index, _type: options.type, _id: jane._id.toString() } },
-                { name: 'Jane', age: 34 },
-                { index: { _index: options.index, _type: options.type, _id: bob._id.toString() } },
-                { name: 'Bob', age: 36 },
-              ],
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: john._id.toString(),
+              },
             },
-            function(err) {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            }
-          );
+            { name: 'John', age: 35 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: jane._id.toString(),
+              },
+            },
+            { name: 'Jane', age: 34 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: bob._id.toString(),
+              },
+            },
+            { name: 'Bob', age: 36 },
+          ],
         });
       })
       .then(function() {
@@ -59,25 +66,23 @@ describe('esRemove', function() {
       .then(function() {
         var options = UserModel.esOptions();
         var client = options.client;
-        client.search(
-          { index: options.index, type: options.type, body: { query: { match_all: {} } } },
-          function(err, resp) {
-            var ids = resp.hits.hits.map(function(hit) {
-              return hit._id;
-            });
-            ids.sort();
-
-            var expectedIds = [john, bob].map(function(user) {
-              return user._id.toString();
-            });
-
-            expect(ids).to.eql(expectedIds);
-            done();
-          }
-        );
+        return client.search({
+          index: options.index,
+          type: options.type,
+          body: { query: { match_all: {} } },
+        });
       })
-      .catch(function(err) {
-        done(err);
+      .then(function(resp) {
+        var ids = resp.hits.hits.map(function(hit) {
+          return hit._id;
+        });
+        ids.sort();
+
+        var expectedIds = [john, bob].map(function(user) {
+          return user._id.toString();
+        });
+
+        expect(ids).to.eql(expectedIds);
       });
   });
 });

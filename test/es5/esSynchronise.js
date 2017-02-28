@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('esSynchronise', function() {
   utils.setup();
 
-  it('should index the database', function(done) {
+  it('should index the database', function() {
     this.timeout(5000);
 
     var users = [];
@@ -21,7 +21,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -39,9 +39,17 @@ describe('esSynchronise', function() {
           age: Number,
         });
 
-        UserPluginSchema.plugin(plugin, { index: 'users', type: 'user', bulk: { size: bulkSize } });
+        UserPluginSchema.plugin(plugin, {
+          index: 'users',
+          type: 'user',
+          bulk: { size: bulkSize },
+        });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -94,16 +102,10 @@ describe('esSynchronise', function() {
             });
           })
         );
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index a subset', function(done) {
+  it('should index a subset', function() {
     this.timeout(5000);
 
     var users = [];
@@ -115,7 +117,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -135,7 +137,11 @@ describe('esSynchronise', function() {
 
         UserPluginSchema.plugin(plugin, { index: 'users', type: 'user' });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -163,36 +169,32 @@ describe('esSynchronise', function() {
           docSent++;
         });
 
-        return UserPluginModel.esSynchronize({ age: { $gte: 90 } }).then(function() {
-          expect(error).to.be.equal(0);
-          expect(docSent).to.be.equal(10);
-          expect(sent).to.be.equal(1);
-          return UserPluginModel;
-        });
+        return UserPluginModel.esSynchronize({ age: { $gte: 90 } })
+          .then(function() {
+            expect(error).to.be.equal(0);
+            expect(docSent).to.be.equal(10);
+            expect(sent).to.be.equal(1);
+            return UserPluginModel;
+          });
       })
       .then(function(UserPluginModel) {
-        return UserPluginModel.esSearch({ match_all: {} }).then(function(result) {
-          expect(result.hits.total).to.eql(10);
-          var ids = result.hits.hits.map(function(hit) {
-            return hit._id;
+        return UserPluginModel.esSearch({ match_all: {} })
+          .then(function(result) {
+            expect(result.hits.total).to.eql(10);
+            var ids = result.hits.hits.map(function(hit) {
+              return hit._id;
+            });
+            var expected = users.slice(-10).map(function(user) {
+              return user._id.toString();
+            });
+            ids.sort();
+            expected.sort();
+            expect(ids).to.eql(expected);
           });
-          var expected = users.slice(-10).map(function(user) {
-            return user._id.toString();
-          });
-          ids.sort();
-          expected.sort();
-          expect(ids).to.eql(expected);
-        });
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index the database using projection', function(done) {
+  it('should index the database using projection', function() {
     this.timeout(5000);
 
     var users = [];
@@ -208,7 +210,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -226,9 +228,17 @@ describe('esSynchronise', function() {
           age: { type: Number, select: false },
         });
 
-        UserPluginSchema.plugin(plugin, { index: 'users', type: 'user', bulk: { size: bulkSize } });
+        UserPluginSchema.plugin(plugin, {
+          index: 'users',
+          type: 'user',
+          bulk: { size: bulkSize },
+        });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -281,16 +291,10 @@ describe('esSynchronise', function() {
             });
           })
         );
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index the database in callback mode', function(done) {
+  it('should index the database in callback mode', function() {
     this.timeout(5000);
 
     var users = [];
@@ -306,7 +310,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -324,9 +328,17 @@ describe('esSynchronise', function() {
           age: Number,
         });
 
-        UserPluginSchema.plugin(plugin, { index: 'users', type: 'user', bulk: { size: bulkSize } });
+        UserPluginSchema.plugin(plugin, {
+          index: 'users',
+          type: 'user',
+          bulk: { size: bulkSize },
+        });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -384,16 +396,10 @@ describe('esSynchronise', function() {
             });
           })
         );
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index a subset in callback mode', function(done) {
+  it('should index a subset in callback mode', function() {
     this.timeout(5000);
 
     var users = [];
@@ -405,7 +411,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -425,7 +431,11 @@ describe('esSynchronise', function() {
 
         UserPluginSchema.plugin(plugin, { index: 'users', type: 'user' });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -466,28 +476,23 @@ describe('esSynchronise', function() {
         });
       })
       .then(function(UserPluginModel) {
-        return UserPluginModel.esSearch({ match_all: {} }).then(function(result) {
-          expect(result.hits.total).to.eql(10);
-          var ids = result.hits.hits.map(function(hit) {
-            return hit._id;
+        return UserPluginModel.esSearch({ match_all: {} })
+          .then(function(result) {
+            expect(result.hits.total).to.eql(10);
+            var ids = result.hits.hits.map(function(hit) {
+              return hit._id;
+            });
+            var expected = users.slice(-10).map(function(user) {
+              return user._id.toString();
+            });
+            ids.sort();
+            expected.sort();
+            expect(ids).to.eql(expected);
           });
-          var expected = users.slice(-10).map(function(user) {
-            return user._id.toString();
-          });
-          ids.sort();
-          expected.sort();
-          expect(ids).to.eql(expected);
-        });
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index the database using projection in callback mode', function(done) {
+  it('should index the database using projection in callback mode', function() {
     this.timeout(5000);
 
     var users = [];
@@ -503,7 +508,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -521,9 +526,17 @@ describe('esSynchronise', function() {
           age: { type: Number, select: false },
         });
 
-        UserPluginSchema.plugin(plugin, { index: 'users', type: 'user', bulk: { size: bulkSize } });
+        UserPluginSchema.plugin(plugin, {
+          index: 'users',
+          type: 'user',
+          bulk: { size: bulkSize },
+        });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -581,16 +594,10 @@ describe('esSynchronise', function() {
             });
           })
         );
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should index filtering', function(done) {
+  it('should index filtering', function() {
     this.timeout(5000);
 
     var users = [];
@@ -602,7 +609,7 @@ describe('esSynchronise', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    UserModel.remove({})
+    return UserModel.remove({})
       .exec()
       .then(function() {
         for (var i = 0; i < 100; i++) {
@@ -628,7 +635,11 @@ describe('esSynchronise', function() {
           },
         });
 
-        var UserPluginModel = mongoose.model('UserPlugin', UserPluginSchema, 'users');
+        var UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
 
         return utils
           .deleteModelIndexes(UserPluginModel)
@@ -685,12 +696,6 @@ describe('esSynchronise', function() {
             });
           })
         );
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });

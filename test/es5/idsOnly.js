@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('idsOnly', function() {
   utils.setup();
 
-  beforeEach(function(done) {
+  beforeEach(function() {
     var UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -26,7 +26,7 @@ describe('idsOnly', function() {
       bob: bob,
     };
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -43,18 +43,15 @@ describe('idsOnly', function() {
       })
       .then(function() {
         return UserModel.esRefresh();
-      })
-      .then(function() {
-        done();
       });
   });
 
-  it('should return ids', function(done) {
+  it('should return ids', function() {
     var UserModel = this.model;
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch(
+    return UserModel.esSearch(
         {
           query: {
             bool: {
@@ -73,20 +70,15 @@ describe('idsOnly', function() {
           return id.toString();
         });
         expect(idstrings).to.eql([bob._id.toString(), john._id.toString()]);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should an empty array', function(done) {
+  it('should an empty array', function() {
     var UserModel = this.model;
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch(
+    return UserModel.esSearch(
         {
           query: {
             bool: {
@@ -100,14 +92,10 @@ describe('idsOnly', function() {
       )
       .then(function(ids) {
         expect(ids).to.eql([]);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should return ids when defined in plugin', function(done) {
+  it('should return ids when defined in plugin', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -121,7 +109,7 @@ describe('idsOnly', function() {
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch({
+    return UserModel.esSearch({
         query: {
           bool: {
             must: { match_all: {} },
@@ -137,15 +125,10 @@ describe('idsOnly', function() {
           return id.toString();
         });
         expect(idstrings).to.eql([bob._id.toString(), john._id.toString()]);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should overwrite defined in plugin value', function(done) {
+  it('should overwrite defined in plugin value', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -159,7 +142,7 @@ describe('idsOnly', function() {
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch(
+    return UserModel.esSearch(
         {
           query: {
             bool: {
@@ -180,11 +163,6 @@ describe('idsOnly', function() {
         hit = result.hits.hits[1];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({ name: 'John', age: 35 });
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });

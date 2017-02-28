@@ -67,7 +67,7 @@ describe('esRefresh', function() {
       });
   });
 
-  it('should not be delayed', function(done) {
+  it('should not be delayed', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -78,7 +78,7 @@ describe('esRefresh', function() {
 
     var start;
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -89,14 +89,10 @@ describe('esRefresh', function() {
       })
       .then(function() {
         expect(Date.now() - start).to.be.lt(500);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should be delayed', function(done) {
+  it('should be delayed', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -107,7 +103,7 @@ describe('esRefresh', function() {
 
     var start;
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -118,14 +114,10 @@ describe('esRefresh', function() {
       })
       .then(function() {
         expect(Date.now() - start).to.be.gte(1000);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should be delayed when defined in plugin', function(done) {
+  it('should be delayed when defined in plugin', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -136,7 +128,7 @@ describe('esRefresh', function() {
 
     var start;
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -147,14 +139,10 @@ describe('esRefresh', function() {
       })
       .then(function() {
         expect(Date.now() - start).to.be.gte(1000);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should overwrite defined in plugin value', function(done) {
+  it('should overwrite defined in plugin value', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -165,7 +153,7 @@ describe('esRefresh', function() {
 
     var start;
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -176,10 +164,6 @@ describe('esRefresh', function() {
       })
       .then(function() {
         expect(Date.now() - start).to.be.lt(500);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });

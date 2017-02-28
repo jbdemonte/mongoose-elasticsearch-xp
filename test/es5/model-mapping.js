@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('model-mapping', function() {
   utils.setup();
 
-  it('should handle plugin settings', function(done) {
+  it('should handle plugin settings', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -22,7 +22,13 @@ describe('model-mapping', function() {
           analyzer: {
             custom_french_analyzer: {
               tokenizer: 'letter',
-              filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+              filter: [
+                'asciifolding',
+                'lowercase',
+                'french_stem',
+                'elision',
+                'stop',
+              ],
             },
             tag_analyzer: {
               tokenizer: 'keyword',
@@ -35,7 +41,7 @@ describe('model-mapping', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -51,7 +57,13 @@ describe('model-mapping', function() {
         expect(analysis.analyzer).to.eql({
           custom_french_analyzer: {
             tokenizer: 'letter',
-            filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+            filter: [
+              'asciifolding',
+              'lowercase',
+              'french_stem',
+              'elision',
+              'stop',
+            ],
           },
           tag_analyzer: {
             tokenizer: 'keyword',
@@ -76,16 +88,10 @@ describe('model-mapping', function() {
         var properties = mapping.users.mappings.user.properties;
         expect(properties).to.have.all.keys('name');
         expect(properties.name.type).to.be.equal('text');
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should handle settings', function(done) {
+  it('should handle settings', function() {
     var UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -94,7 +100,7 @@ describe('model-mapping', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping({
@@ -108,7 +114,13 @@ describe('model-mapping', function() {
             analyzer: {
               custom_french_analyzer: {
                 tokenizer: 'letter',
-                filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+                filter: [
+                  'asciifolding',
+                  'lowercase',
+                  'french_stem',
+                  'elision',
+                  'stop',
+                ],
               },
               tag_analyzer: {
                 tokenizer: 'keyword',
@@ -129,7 +141,13 @@ describe('model-mapping', function() {
         expect(analysis.analyzer).to.eql({
           custom_french_analyzer: {
             tokenizer: 'letter',
-            filter: ['asciifolding', 'lowercase', 'french_stem', 'elision', 'stop'],
+            filter: [
+              'asciifolding',
+              'lowercase',
+              'french_stem',
+              'elision',
+              'stop',
+            ],
           },
           tag_analyzer: {
             tokenizer: 'keyword',
@@ -154,16 +172,10 @@ describe('model-mapping', function() {
         var properties = mapping.users.mappings.user.properties;
         expect(properties).to.have.all.keys('name');
         expect(properties.name.type).to.be.equal('text');
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should create an implicit mapping', function(done) {
+  it('should create an implicit mapping', function() {
     var deepEmbeddedSchema = new mongoose.Schema({
       _id: false,
       dn: Number,
@@ -193,7 +205,7 @@ describe('model-mapping', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -230,17 +242,16 @@ describe('model-mapping', function() {
         expect(properties.embedded.properties).to.have.all.keys('deep', 'key');
         expect(properties.embedded.properties.key.type).to.be.equal('text');
 
-        expect(properties.embedded.properties.deep.properties).to.have.all.keys('dn');
-        expect(properties.embedded.properties.deep.properties.dn.type).to.be.equal('double');
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
+        expect(properties.embedded.properties.deep.properties).to.have.all.keys(
+          'dn'
+        );
+        expect(
+          properties.embedded.properties.deep.properties.dn.type
+        ).to.be.equal('double');
       });
   });
 
-  it('should create an explicit mapping', function(done) {
+  it('should create an explicit mapping', function() {
     var deepImplicitEmbeddedSchema = new mongoose.Schema({
       _id: false,
       dn: Number,
@@ -279,7 +290,7 @@ describe('model-mapping', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -293,23 +304,28 @@ describe('model-mapping', function() {
       })
       .then(function(mapping) {
         var properties = mapping.users.mappings.user.properties;
-        expect(properties).to.have.all.keys('name', 'tags', 'optin', 'embedded2');
+        expect(properties).to.have.all.keys(
+          'name',
+          'tags',
+          'optin',
+          'embedded2'
+        );
         expect(properties.name.type).to.be.equal('text');
         expect(properties.tags.type).to.be.equal('text');
         expect(properties.optin.type).to.be.equal('boolean');
 
         expect(properties.embedded2.properties).to.have.all.keys('deep1');
 
-        expect(properties.embedded2.properties.deep1.properties).to.have.all.keys('dn');
-        expect(properties.embedded2.properties.deep1.properties.dn.type).to.be.equal('double');
-        done();
-      })
-      .catch(function(err) {
-        done(err);
+        expect(
+          properties.embedded2.properties.deep1.properties
+        ).to.have.all.keys('dn');
+        expect(
+          properties.embedded2.properties.deep1.properties.dn.type
+        ).to.be.equal('double');
       });
   });
 
-  it('should propagate es options', function(done) {
+  it('should propagate es options', function() {
     var UserSchema = new mongoose.Schema({
       name: { type: String, es_boost: 2 },
       age: { type: Number, es_type: 'integer', es_boost: 1.5 },
@@ -326,7 +342,7 @@ describe('model-mapping', function() {
 
     var UserModel = mongoose.model('User', UserSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -340,7 +356,13 @@ describe('model-mapping', function() {
       })
       .then(function(mapping) {
         var properties = mapping.users.mappings.user.properties;
-        expect(properties).to.have.all.keys('name', 'age', 'joined', 'optin', 'pos');
+        expect(properties).to.have.all.keys(
+          'name',
+          'age',
+          'joined',
+          'optin',
+          'pos'
+        );
         expect(properties.name.type).to.be.equal('text');
         expect(properties.name.boost).to.be.equal(2);
         expect(properties.age.type).to.be.equal('integer');
@@ -348,16 +370,11 @@ describe('model-mapping', function() {
         expect(properties.joined.type).to.be.equal('date');
         expect(properties.optin.type).to.be.equal('boolean');
         expect(properties.pos.type).to.be.equal('geo_point');
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
   // https://www.elastic.co/guide/en/elasticsearch/reference/2.0/nested.html
-  it('should handle nested datatype', function(done) {
+  it('should handle nested datatype', function() {
     var UserSchema = new mongoose.Schema({
       _id: false,
       first: String,
@@ -373,7 +390,7 @@ describe('model-mapping', function() {
 
     var GroupModel = mongoose.model('Group', GroupSchema);
 
-    utils
+    return utils
       .deleteModelIndexes(GroupModel)
       .then(function() {
         return GroupModel.esCreateMapping();
@@ -470,16 +487,10 @@ describe('model-mapping', function() {
               ],
             });
           });
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should handle es_type as "schema"', function(done) {
+  it('should handle es_type as "schema"', function() {
     var user, city, company;
 
     var TagSchema = new mongoose.Schema({
@@ -537,7 +548,7 @@ describe('model-mapping', function() {
     var CompanyModel = mongoose.model('Company', CompanySchema);
     var CityModel = mongoose.model('City', CitySchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -554,7 +565,11 @@ describe('model-mapping', function() {
         expect(properties).to.have.all.keys('first', 'last', 'company');
         expect(properties.first.type).to.be.equal('text');
         expect(properties.last.type).to.be.equal('text');
-        expect(properties.company.properties).to.have.all.keys('_id', 'name', 'city');
+        expect(properties.company.properties).to.have.all.keys(
+          '_id',
+          'name',
+          'city'
+        );
         expect(properties.company.properties._id.type).to.be.equal('text');
         expect(properties.company.properties.name.type).to.be.equal('text');
         expect(properties.company.properties.city.properties).to.have.all.keys(
@@ -562,11 +577,15 @@ describe('model-mapping', function() {
           'name',
           'tags'
         );
-        expect(properties.company.properties.city.properties._id.type).to.be.equal('text');
-        expect(properties.company.properties.city.properties.name.type).to.be.equal('text');
-        expect(properties.company.properties.city.properties.tags.properties).to.have.all.keys(
-          'value'
-        );
+        expect(
+          properties.company.properties.city.properties._id.type
+        ).to.be.equal('text');
+        expect(
+          properties.company.properties.city.properties.name.type
+        ).to.be.equal('text');
+        expect(
+          properties.company.properties.city.properties.tags.properties
+        ).to.have.all.keys('value');
         expect(
           properties.company.properties.city.properties.tags.properties.value.type
         ).to.be.equal('text');
@@ -626,16 +645,10 @@ describe('model-mapping', function() {
             },
           },
         });
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should not be blocked by a non populated "es_type schema"', function(done) {
+  it('should not be blocked by a non populated "es_type schema"', function() {
     var user, city, company;
 
     var TagSchema = new mongoose.Schema({
@@ -693,7 +706,7 @@ describe('model-mapping', function() {
     var CompanyModel = mongoose.model('Company', CompanySchema);
     var CityModel = mongoose.model('City', CitySchema);
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -744,12 +757,6 @@ describe('model-mapping', function() {
           first: 'Maurice',
           last: 'Moss',
         });
-      })
-      .then(function() {
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });

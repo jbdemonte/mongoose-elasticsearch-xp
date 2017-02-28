@@ -38,12 +38,20 @@ describe('esIndex', function() {
         var options = UserModel.esOptions();
         var client = options.client;
         client.search(
-          { index: options.index, type: options.type, body: { query: { match_all: {} } } },
+          {
+            index: options.index,
+            type: options.type,
+            body: { query: { match_all: {} } },
+          },
           function(err, resp) {
             expect(resp.hits.total).to.eql(1);
             var hit = resp.hits.hits[0];
             expect(hit._id).to.eql(john._id.toString());
-            expect(hit._source).to.eql({ name: 'John', age: 35, pos: [5.7333, 43.5] });
+            expect(hit._source).to.eql({
+              name: 'John',
+              age: 35,
+              pos: [5.7333, 43.5],
+            });
             done();
           }
         );
@@ -76,7 +84,11 @@ describe('esIndex', function() {
 
     var country = new CountryModel({ name: 'France' });
     var city = new CityModel({ name: 'Paris' });
-    var john = new UserModel({ name: 'John', city: city, country: country._id });
+    var john = new UserModel({
+      name: 'John',
+      city: city,
+      country: country._id,
+    });
 
     utils
       .deleteModelIndexes(UserModel)
@@ -93,12 +105,20 @@ describe('esIndex', function() {
         var options = UserModel.esOptions();
         var client = options.client;
         client.search(
-          { index: options.index, type: options.type, body: { query: { match_all: {} } } },
+          {
+            index: options.index,
+            type: options.type,
+            body: { query: { match_all: {} } },
+          },
           function(err, resp) {
             expect(resp.hits.total).to.eql(1);
             var hit = resp.hits.hits[0];
             expect(hit._id).to.eql(john._id.toString());
-            expect(hit._source).to.eql({ name: 'John', city: city.id, country: country.id });
+            expect(hit._source).to.eql({
+              name: 'John',
+              city: city.id,
+              country: country.id,
+            });
             done();
           }
         );

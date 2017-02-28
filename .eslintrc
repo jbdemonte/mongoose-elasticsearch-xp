@@ -6,7 +6,7 @@
     "prettier/prettier": ["error", {
       "trailingComma": true,
       "singleQuote": true,
-      "printWidth": 100
+      "printWidth": 80
     }]
   },
   "env": {

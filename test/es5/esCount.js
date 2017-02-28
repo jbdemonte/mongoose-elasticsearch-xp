@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('esCount', function() {
   utils.setup();
 
-  beforeEach(function(done) {
+  beforeEach(function() {
     var self = this;
 
     var UserSchema = new mongoose.Schema({
@@ -29,7 +29,7 @@ describe('esCount', function() {
       bob: bob,
     };
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -37,36 +37,43 @@ describe('esCount', function() {
       .then(function() {
         var options = UserModel.esOptions();
         var client = options.client;
-        client.bulk(
-          {
-            refresh: true,
-            body: [
-              { index: { _index: options.index, _type: options.type, _id: john._id.toString() } },
-              { name: 'John', age: 35 },
-              { index: { _index: options.index, _type: options.type, _id: jane._id.toString() } },
-              { name: 'Jane', age: 34 },
-              { index: { _index: options.index, _type: options.type, _id: bob._id.toString() } },
-              { name: 'Bob', age: 36 },
-            ],
-          },
-          function(err) {
-            done(err);
-          }
-        );
+        return client.bulk({
+          refresh: true,
+          body: [
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: john._id.toString(),
+              },
+            },
+            { name: 'John', age: 35 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: jane._id.toString(),
+              },
+            },
+            { name: 'Jane', age: 34 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: bob._id.toString(),
+              },
+            },
+            { name: 'Bob', age: 36 },
+          ],
+        });
       });
   });
 
-  it('should handle a lucene query', function(done) {
+  it('should handle a lucene query', function() {
     var self = this;
-    self.model
-      .esCount('name:jane')
-      .then(function(result) {
-        expect(result.count).to.eql(1);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esCount('name:jane').then(function(result) {
+      expect(result.count).to.eql(1);
+    });
   });
 
   it('should accept callback', function(done) {
@@ -81,42 +88,31 @@ describe('esCount', function() {
     });
   });
 
-  it('should handle a full query', function(done) {
+  it('should handle a full query', function() {
     var self = this;
-    self.model
-      .esCount({ bool: { must: { match_all: {} }, filter: { range: { age: { lt: 35 } } } } })
+    return self.model
+      .esCount({
+        bool: {
+          must: { match_all: {} },
+          filter: { range: { age: { lt: 35 } } },
+        },
+      })
       .then(function(result) {
         expect(result.count).to.eql(1);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should handle a short query', function(done) {
+  it('should handle a short query', function() {
     var self = this;
-    self.model
-      .esCount({ match: { age: 34 } })
-      .then(function(result) {
-        expect(result.count).to.eql(1);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esCount({ match: { age: 34 } }).then(function(result) {
+      expect(result.count).to.eql(1);
+    });
   });
 
-  it('should handle 0 hit', function(done) {
+  it('should handle 0 hit', function() {
     var self = this;
-    self.model
-      .esCount({ match: { age: 100 } })
-      .then(function(result) {
-        expect(result.count).to.eql(0);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esCount({ match: { age: 100 } }).then(function(result) {
+      expect(result.count).to.eql(0);
+    });
   });
 });

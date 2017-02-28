@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('hydratation', function() {
   utils.setup();
 
-  beforeEach(function(done) {
+  beforeEach(function() {
     var UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -26,7 +26,7 @@ describe('hydratation', function() {
       bob: bob,
     };
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -43,18 +43,15 @@ describe('hydratation', function() {
       })
       .then(function() {
         return UserModel.esRefresh();
-      })
-      .then(function() {
-        done();
       });
   });
 
-  it('should hydrate', function(done) {
+  it('should hydrate', function() {
     var UserModel = this.model;
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch(
+    return UserModel.esSearch(
         {
           query: {
             bool: {
@@ -83,20 +80,15 @@ describe('hydratation', function() {
         expect(hit.doc._id.toString()).to.eql(john._id.toString());
         expect(hit.doc.name).to.eql(john.name);
         expect(hit.doc.age).to.eql(john.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should hydrate returning only models', function(done) {
+  it('should hydrate returning only models', function() {
     var UserModel = this.model;
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch(
+    return UserModel.esSearch(
         {
           query: {
             bool: {
@@ -121,40 +113,34 @@ describe('hydratation', function() {
         expect(user._id.toString()).to.eql(john._id.toString());
         expect(user.name).to.eql(john.name);
         expect(user.age).to.eql(john.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should return an empty array when hydrating only models on 0 hit', function(done) {
-    var UserModel = this.model;
+  it(
+    'should return an empty array when hydrating only models on 0 hit',
+    function() {
+      var UserModel = this.model;
 
-    UserModel.esSearch(
-        {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: { range: { age: { gte: 100 } } },
+      return UserModel.esSearch(
+          {
+            query: {
+              bool: {
+                must: { match_all: {} },
+                filter: { range: { age: { gte: 100 } } },
+              },
             },
+            sort: [{ age: { order: 'desc' } }],
           },
-          sort: [{ age: { order: 'desc' } }],
-        },
-        { hydrate: { docsOnly: true } }
-      )
-      .then(function(users) {
-        var user;
-        expect(users).to.eql([]);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
-  });
+          { hydrate: { docsOnly: true } }
+        )
+        .then(function(users) {
+          var user;
+          expect(users).to.eql([]);
+        });
+    }
+  );
 
-  it('should hydrate using projection', function(done) {
+  it('should hydrate using projection', function() {
     var UserModel = this.model;
     var jane = this.users.jane;
 
@@ -169,19 +155,16 @@ describe('hydratation', function() {
         expect(hit.doc._id.toString()).to.eql(jane._id.toString());
         expect(hit.doc.name).to.eql(jane.name);
         expect(hit.doc.age).to.be.undefined;
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should hydrate using options', function(done) {
+  it('should hydrate using options', function() {
     var UserModel = this.model;
     var jane = this.users.jane;
 
-    return UserModel.esSearch('name:jane', { hydrate: { options: { lean: true } } })
+    return UserModel.esSearch('name:jane', {
+        hydrate: { options: { lean: true } },
+      })
       .then(function(result) {
         var hit;
         expect(result.hits.total).to.eql(1);
@@ -192,15 +175,10 @@ describe('hydratation', function() {
         expect(hit.doc._id.toString()).to.eql(jane._id.toString());
         expect(hit.doc.name).to.eql(jane.name);
         expect(hit.doc.age).to.eql(jane.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should hydrate when defined in plugin', function(done) {
+  it('should hydrate when defined in plugin', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -214,26 +192,20 @@ describe('hydratation', function() {
 
     var jane = this.users.jane;
 
-    return UserModel.esSearch('name:jane')
-      .then(function(result) {
-        var hit;
-        expect(result.hits.total).to.eql(1);
+    return UserModel.esSearch('name:jane').then(function(result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
 
-        hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.eql(jane.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.eql(jane.age);
+    });
   });
 
-  it('should hydrate when defined in plugin returning only models', function(done) {
+  it('should hydrate when defined in plugin returning only models', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -248,7 +220,7 @@ describe('hydratation', function() {
     var john = this.users.john;
     var bob = this.users.bob;
 
-    UserModel.esSearch({
+    return UserModel.esSearch({
         query: {
           bool: {
             must: { match_all: {} },
@@ -270,15 +242,10 @@ describe('hydratation', function() {
         expect(user._id.toString()).to.eql(john._id.toString());
         expect(user.name).to.eql(john.name);
         expect(user.age).to.eql(john.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should hydrate when defined in plugin using projection', function(done) {
+  it('should hydrate when defined in plugin using projection', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -292,26 +259,20 @@ describe('hydratation', function() {
 
     var jane = this.users.jane;
 
-    return UserModel.esSearch('name:jane')
-      .then(function(result) {
-        var hit;
-        expect(result.hits.total).to.eql(1);
+    return UserModel.esSearch('name:jane').then(function(result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
 
-        hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.be.undefined;
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.be.undefined;
+    });
   });
 
-  it('should hydrate when defined in plugin using options', function(done) {
+  it('should hydrate when defined in plugin using options', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -325,62 +286,20 @@ describe('hydratation', function() {
 
     var jane = this.users.jane;
 
-    return UserModel.esSearch('name:jane')
-      .then(function(result) {
-        var hit;
-        expect(result.hits.total).to.eql(1);
+    return UserModel.esSearch('name:jane').then(function(result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
 
-        hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).not.to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.eql(jane.age);
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
-  });
-
-  it('should hydrate overwriting defined in plugin using options', function(done) {
-    utils.deleteMongooseModels();
-
-    var UserSchema = new mongoose.Schema({
-      name: String,
-      age: Number,
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).not.to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.eql(jane.age);
     });
-
-    UserSchema.plugin(plugin, { hydrate: { options: { lean: true } } });
-
-    var UserModel = mongoose.model('User', UserSchema);
-
-    var jane = this.users.jane;
-
-    return UserModel.esSearch(
-        'name:jane',
-        { hydrate: { select: 'name' } } // not lean
-      )
-      .then(function(result) {
-        var hit;
-        expect(result.hits.total).to.eql(1);
-
-        hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.be.undefined;
-
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
   });
 
-  it('should not hydrate overwriting defined in plugin', function(done) {
+  it('should hydrate overwriting defined in plugin using options', function() {
     utils.deleteMongooseModels();
 
     var UserSchema = new mongoose.Schema({
@@ -395,23 +314,47 @@ describe('hydratation', function() {
     var jane = this.users.jane;
 
     return UserModel.esSearch(
-        'name:jane',
-        { hydrate: false } // not lean
-      )
-      .then(function(result) {
-        var hit;
-        expect(result.hits.total).to.eql(1);
+      'name:jane',
+      { hydrate: { select: 'name' } } // not lean
+    ).then(function(result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
 
-        hit = result.hits.hits[0];
-        expect(hit.doc).to.be.undefined;
-        expect(hit._source).not.to.be.undefined;
-        expect(hit._source.name).to.eql(jane.name);
-        expect(hit._source.age).to.eql(34);
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.be.undefined;
+    });
+  });
 
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+  it('should not hydrate overwriting defined in plugin', function() {
+    utils.deleteMongooseModels();
+
+    var UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+    });
+
+    UserSchema.plugin(plugin, { hydrate: { options: { lean: true } } });
+
+    var UserModel = mongoose.model('User', UserSchema);
+
+    var jane = this.users.jane;
+
+    return UserModel.esSearch(
+      'name:jane',
+      { hydrate: false } // not lean
+    ).then(function(result) {
+      var hit;
+      expect(result.hits.total).to.eql(1);
+
+      hit = result.hits.hits[0];
+      expect(hit.doc).to.be.undefined;
+      expect(hit._source).not.to.be.undefined;
+      expect(hit._source.name).to.eql(jane.name);
+      expect(hit._source.age).to.eql(34);
+    });
   });
 });

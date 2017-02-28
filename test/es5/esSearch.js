@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('esSearch', function() {
   utils.setup();
 
-  beforeEach(function(done) {
+  beforeEach(function() {
     var self = this;
 
     var UserSchema = new mongoose.Schema({
@@ -29,7 +29,7 @@ describe('esSearch', function() {
       bob: bob,
     };
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -37,39 +37,46 @@ describe('esSearch', function() {
       .then(function() {
         var options = UserModel.esOptions();
         var client = options.client;
-        client.bulk(
-          {
-            refresh: true,
-            body: [
-              { index: { _index: options.index, _type: options.type, _id: john._id.toString() } },
-              { name: 'John', age: 35 },
-              { index: { _index: options.index, _type: options.type, _id: jane._id.toString() } },
-              { name: 'Jane', age: 34 },
-              { index: { _index: options.index, _type: options.type, _id: bob._id.toString() } },
-              { name: 'Bob', age: 36 },
-            ],
-          },
-          function(err) {
-            done(err);
-          }
-        );
+        return client.bulk({
+          refresh: true,
+          body: [
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: john._id.toString(),
+              },
+            },
+            { name: 'John', age: 35 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: jane._id.toString(),
+              },
+            },
+            { name: 'Jane', age: 34 },
+            {
+              index: {
+                _index: options.index,
+                _type: options.type,
+                _id: bob._id.toString(),
+              },
+            },
+            { name: 'Bob', age: 36 },
+          ],
+        });
       });
   });
 
-  it('should handle a lucene query', function(done) {
+  it('should handle a lucene query', function() {
     var self = this;
-    self.model
-      .esSearch('name:jane')
-      .then(function(result) {
-        expect(result.hits.total).to.eql(1);
-        var hit = result.hits.hits[0];
-        expect(hit._id).to.eql(self.users.jane._id.toString());
-        expect(hit._source).to.eql({ name: 'Jane', age: 34 });
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esSearch('name:jane').then(function(result) {
+      expect(result.hits.total).to.eql(1);
+      var hit = result.hits.hits[0];
+      expect(hit._id).to.eql(self.users.jane._id.toString());
+      expect(hit._source).to.eql({ name: 'Jane', age: 34 });
+    });
   });
 
   it('should accept callback', function(done) {
@@ -102,48 +109,37 @@ describe('esSearch', function() {
     });
   });
 
-  it('should handle a full query', function(done) {
+  it('should handle a full query', function() {
     var self = this;
-    self.model
-      .esSearch({ bool: { must: { match_all: {} }, filter: { range: { age: { lt: 35 } } } } })
+    return self.model
+      .esSearch({
+        bool: {
+          must: { match_all: {} },
+          filter: { range: { age: { lt: 35 } } },
+        },
+      })
       .then(function(result) {
         expect(result.hits.total).to.eql(1);
         var hit = result.hits.hits[0];
         expect(hit._id).to.eql(self.users.jane._id.toString());
         expect(hit._source).to.eql({ name: 'Jane', age: 34 });
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 
-  it('should handle a short query', function(done) {
+  it('should handle a short query', function() {
     var self = this;
-    self.model
-      .esSearch({ match: { age: 34 } })
-      .then(function(result) {
-        expect(result.hits.total).to.eql(1);
-        var hit = result.hits.hits[0];
-        expect(hit._id).to.eql(self.users.jane._id.toString());
-        expect(hit._source).to.eql({ name: 'Jane', age: 34 });
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esSearch({ match: { age: 34 } }).then(function(result) {
+      expect(result.hits.total).to.eql(1);
+      var hit = result.hits.hits[0];
+      expect(hit._id).to.eql(self.users.jane._id.toString());
+      expect(hit._source).to.eql({ name: 'Jane', age: 34 });
+    });
   });
 
-  it('should handle 0 hit', function(done) {
+  it('should handle 0 hit', function() {
     var self = this;
-    self.model
-      .esSearch({ match: { age: 100 } })
-      .then(function(result) {
-        expect(result.hits.total).to.eql(0);
-        done();
-      })
-      .catch(function(err) {
-        done(err);
-      });
+    return self.model.esSearch({ match: { age: 100 } }).then(function(result) {
+      expect(result.hits.total).to.eql(0);
+    });
   });
 });

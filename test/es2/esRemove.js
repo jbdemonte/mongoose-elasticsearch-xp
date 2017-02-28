@@ -32,11 +32,29 @@ describe('esRemove', function() {
             {
               refresh: true,
               body: [
-                { index: { _index: options.index, _type: options.type, _id: john._id.toString() } },
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: john._id.toString(),
+                  },
+                },
                 { name: 'John', age: 35 },
-                { index: { _index: options.index, _type: options.type, _id: jane._id.toString() } },
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: jane._id.toString(),
+                  },
+                },
                 { name: 'Jane', age: 34 },
-                { index: { _index: options.index, _type: options.type, _id: bob._id.toString() } },
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: bob._id.toString(),
+                  },
+                },
                 { name: 'Bob', age: 36 },
               ],
             },
@@ -60,7 +78,11 @@ describe('esRemove', function() {
         var options = UserModel.esOptions();
         var client = options.client;
         client.search(
-          { index: options.index, type: options.type, body: { query: { match_all: {} } } },
+          {
+            index: options.index,
+            type: options.type,
+            body: { query: { match_all: {} } },
+          },
           function(err, resp) {
             var ids = resp.hits.hits.map(function(hit) {
               return hit._id;

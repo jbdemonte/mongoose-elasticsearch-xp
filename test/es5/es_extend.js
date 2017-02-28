@@ -5,7 +5,7 @@ var plugin = require('../../');
 describe('es_extend', function() {
   utils.setup();
 
-  it('should add some fields', function(done) {
+  it('should add some fields', function() {
     var UserSchema = new mongoose.Schema(
       {
         name: String,
@@ -35,7 +35,7 @@ describe('es_extend', function() {
       name: 'John',
     });
 
-    utils
+    return utils
       .deleteModelIndexes(UserModel)
       .then(function() {
         return UserModel.esCreateMapping();
@@ -77,10 +77,6 @@ describe('es_extend', function() {
           num: 123,
           length: 4,
         });
-        done();
-      })
-      .catch(function(err) {
-        done(err);
       });
   });
 });
