@@ -34,7 +34,11 @@
     "bluebird": "^3.4.6",
     "chai": "^3.5.0",
     "coveralls": "^2.11.14",
+    "eslint": "^3.16.1",
+    "eslint-config-prettier": "^1.4.0",
+    "eslint-plugin-prettier": "^2.0.1",
     "istanbul": "^0.4.5",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "prettier": "^0.19.0"
   }
 }
