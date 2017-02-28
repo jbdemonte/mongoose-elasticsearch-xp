@@ -4,14 +4,12 @@ var mongoose = require('mongoose');
 
 var plugin = require('../../');
 
-describe("promise-bluebird", function () {
-
+describe('promise-bluebird', function() {
   utils.setup();
 
-  it('should return bluebird promise', function () {
-
+  it('should return bluebird promise', function() {
     var UserSchema = new mongoose.Schema({
-      name: String
+      name: String,
     });
 
     UserSchema.plugin(plugin);
@@ -19,8 +17,5 @@ describe("promise-bluebird", function () {
     var UserModel = mongoose.model('User', UserSchema);
     var promise = UserModel.esCreateMapping();
     expect(promise).to.be.an.instanceof(bluebird);
-
   });
-
-
 });

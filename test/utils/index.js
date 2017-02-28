@@ -6,7 +6,7 @@ module.exports = {
   Promise: _Promise,
   setup: setup,
   deleteModelIndexes: deleteModelIndexes,
-  deleteMongooseModels: deleteMongooseModels
+  deleteMongooseModels: deleteMongooseModels,
 };
 
 function array(mixed) {
@@ -14,10 +14,9 @@ function array(mixed) {
 }
 
 function setup() {
-
-  before(function (done) {
+  before(function(done) {
     global.expect = require('chai').expect;
-    mongoose.connect('mongodb://localhost/test', function (err) {
+    mongoose.connect('mongodb://localhost/test', function(err) {
       if (err) {
         done(err);
       } else {
@@ -26,12 +25,12 @@ function setup() {
     });
   });
 
-  beforeEach(function () {
+  beforeEach(function() {
     deleteMongooseModels();
   });
 
-  after(function (done) {
-    mongoose.disconnect(function () {
+  after(function(done) {
+    mongoose.disconnect(function() {
       done();
     });
   });
@@ -40,23 +39,23 @@ function setup() {
 function deleteModelIndexes(models) {
   return _Promise
     .all(
-      array(models).map(function (model) {
-        return new _Promise(function (resolve) {
+      array(models).map(function(model) {
+        return new _Promise(function(resolve) {
           var options = model.esOptions();
           var client = options.client;
-          client.indices.delete({index: options.index}, function (err) {
+          client.indices.delete({ index: options.index }, function(err) {
             resolve();
           });
         });
       })
     )
-    .then(function () {
+    .then(function() {
       // do nothing, just remove the results to allows to use .then(done)
     });
 }
 
 function deleteMongooseModels() {
-  Object.keys(mongoose.models).forEach(function (name) {
+  Object.keys(mongoose.models).forEach(function(name) {
     delete mongoose.models[name];
     delete mongoose.modelSchemas[name];
   });
