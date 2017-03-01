@@ -1,55 +1,55 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../');
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../');
 
-describe('idsOnly', function() {
+describe('idsOnly', () => {
   utils.setup();
+  let UserModel;
+  let users;
 
-  beforeEach(function() {
-    var UserSchema = new mongoose.Schema({
+  beforeEach(() => {
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({ name: 'John', age: 35 });
-    var jane = new UserModel({ name: 'Jane', age: 34 });
-    var bob = new UserModel({ name: 'Bob', age: 36 });
+    const john = new UserModel({ name: 'John', age: 35 });
+    const jane = new UserModel({ name: 'Jane', age: 34 });
+    const bob = new UserModel({ name: 'Bob', age: 36 });
 
-    this.model = UserModel;
-    this.users = {
-      john: john,
-      jane: jane,
-      bob: bob,
+    users = {
+      john,
+      jane,
+      bob,
     };
 
     return utils
       .deleteModelIndexes(UserModel)
-      .then(function() {
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function() {
+      .then(() => {
         return utils.Promise.all(
-          [john, jane, bob].map(function(user) {
-            return new utils.Promise(function(resolve) {
+          [john, jane, bob].map(user => {
+            return new utils.Promise(resolve => {
               user.on('es-indexed', resolve);
               user.save();
             });
           })
         );
       })
-      .then(function() {
+      .then(() => {
         return UserModel.esRefresh();
       });
   });
 
-  it('should return ids', function() {
-    var UserModel = this.model;
-    var john = this.users.john;
-    var bob = this.users.bob;
+  it('should return ids', () => {
+    const john = users.john;
+    const bob = users.bob;
 
     return UserModel.esSearch(
         {
@@ -63,9 +63,9 @@ describe('idsOnly', function() {
         },
         { idsOnly: true }
       )
-      .then(function(ids) {
+      .then(ids => {
         expect(ids.length).to.eql(2);
-        var idstrings = ids.map(function(id) {
+        const idstrings = ids.map(id => {
           expect(id).to.be.an.instanceof(mongoose.Types.ObjectId);
           return id.toString();
         });
@@ -73,11 +73,7 @@ describe('idsOnly', function() {
       });
   });
 
-  it('should an empty array', function() {
-    var UserModel = this.model;
-    var john = this.users.john;
-    var bob = this.users.bob;
-
+  it('should an empty array', () => {
     return UserModel.esSearch(
         {
           query: {
@@ -90,26 +86,26 @@ describe('idsOnly', function() {
         },
         { idsOnly: true }
       )
-      .then(function(ids) {
+      .then(ids => {
         expect(ids).to.eql([]);
       });
   });
 
-  it('should return ids when defined in plugin', function() {
+  it('should return ids when defined in plugin', () => {
     utils.deleteMongooseModels();
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin, { idsOnly: true });
 
-    var UserModel = mongoose.model('User', UserSchema);
-    var john = this.users.john;
-    var bob = this.users.bob;
+    const UserModelIdsOnly = mongoose.model('User', UserSchema);
+    const john = users.john;
+    const bob = users.bob;
 
-    return UserModel.esSearch({
+    return UserModelIdsOnly.esSearch({
         query: {
           bool: {
             must: { match_all: {} },
@@ -118,9 +114,9 @@ describe('idsOnly', function() {
         },
         sort: [{ age: { order: 'desc' } }],
       })
-      .then(function(ids) {
+      .then(ids => {
         expect(ids.length).to.eql(2);
-        var idstrings = ids.map(function(id) {
+        const idstrings = ids.map(id => {
           expect(id).to.be.an.instanceof(mongoose.Types.ObjectId);
           return id.toString();
         });
@@ -128,21 +124,21 @@ describe('idsOnly', function() {
       });
   });
 
-  it('should overwrite defined in plugin value', function() {
+  it('should overwrite defined in plugin value', () => {
     utils.deleteMongooseModels();
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin, { idsOnly: true });
 
-    var UserModel = mongoose.model('User', UserSchema);
-    var john = this.users.john;
-    var bob = this.users.bob;
+    const UserModelIdsOnly = mongoose.model('User', UserSchema);
+    const john = users.john;
+    const bob = users.bob;
 
-    return UserModel.esSearch(
+    return UserModelIdsOnly.esSearch(
         {
           query: {
             bool: {
@@ -154,9 +150,9 @@ describe('idsOnly', function() {
         },
         { idsOnly: false }
       )
-      .then(function(result) {
+      .then(result => {
         expect(result.hits.total).to.eql(2);
-        var hit = result.hits.hits[0];
+        let hit = result.hits.hits[0];
         expect(hit._id).to.eql(bob._id.toString());
         expect(hit._source).to.eql({ name: 'Bob', age: 36 });
 

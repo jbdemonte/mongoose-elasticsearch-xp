@@ -1,54 +1,40 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../');
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../');
 
-describe('countOnly', function() {
+describe('countOnly', () => {
   utils.setup();
+  let UserModel;
 
-  beforeEach(function() {
-    var UserSchema = new mongoose.Schema({
+  beforeEach(() => {
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin);
+    UserModel = mongoose.model('User', UserSchema);
 
-    var UserModel = mongoose.model('User', UserSchema);
-
-    var john = new UserModel({ name: 'John', age: 35 });
-    var jane = new UserModel({ name: 'Jane', age: 34 });
-    var bob = new UserModel({ name: 'Bob', age: 36 });
-
-    this.model = UserModel;
-    this.users = {
-      john: john,
-      jane: jane,
-      bob: bob,
-    };
+    const john = new UserModel({ name: 'John', age: 35 });
+    const jane = new UserModel({ name: 'Jane', age: 34 });
+    const bob = new UserModel({ name: 'Bob', age: 36 });
 
     return utils
       .deleteModelIndexes(UserModel)
-      .then(function() {
-        return UserModel.esCreateMapping();
-      })
-      .then(function() {
-        return utils.Promise.all(
-          [john, jane, bob].map(function(user) {
-            return new utils.Promise(function(resolve) {
-              user.on('es-indexed', resolve);
-              user.save();
-            });
+      .then(() => UserModel.esCreateMapping())
+      .then(() => utils.Promise.all(
+        [john, jane, bob].map(
+          user => new utils.Promise(resolve => {
+            user.on('es-indexed', resolve);
+            user.save();
           })
-        );
-      })
-      .then(function() {
-        return UserModel.esRefresh();
-      });
+        )
+      ))
+      .then(() => UserModel.esRefresh());
   });
 
-  it('should return count', function() {
-    return this.model
-      .esCount(
+  it('should return count', () => {
+    return UserModel.esCount(
         {
           bool: {
             must: { match_all: {} },
@@ -57,14 +43,13 @@ describe('countOnly', function() {
         },
         { countOnly: true }
       )
-      .then(function(count) {
+      .then(count => {
         expect(count).to.eql(2);
       });
   });
 
-  it('should return 0', function() {
-    return this.model
-      .esCount(
+  it('should return 0', () => {
+    return UserModel.esCount(
         {
           bool: {
             must: { match_all: {} },
@@ -73,47 +58,47 @@ describe('countOnly', function() {
         },
         { countOnly: true }
       )
-      .then(function(count) {
+      .then(count => {
         expect(count).to.eql(0);
       });
   });
 
-  it('should return count when defined in plugin', function() {
+  it('should return count when defined in plugin', () => {
     utils.deleteMongooseModels();
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin, { countOnly: true });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModelCountOnly = mongoose.model('User', UserSchema);
 
-    return UserModel.esCount({
+    return UserModelCountOnly.esCount({
         bool: {
           must: { match_all: {} },
           filter: { range: { age: { gte: 35 } } },
         },
       })
-      .then(function(count) {
+      .then(count => {
         expect(count).to.eql(2);
       });
   });
 
-  it('should overwrite defined in plugin value', function() {
+  it('should overwrite defined in plugin value', () => {
     utils.deleteMongooseModels();
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
     });
 
     UserSchema.plugin(plugin, { countOnly: true });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModelCountOnly = mongoose.model('User', UserSchema);
 
-    return UserModel.esCount(
+    return UserModelCountOnly.esCount(
         {
           bool: {
             must: { match_all: {} },
@@ -122,7 +107,7 @@ describe('countOnly', function() {
         },
         { countOnly: false }
       )
-      .then(function(result) {
+      .then(result => {
         expect(result.count).to.eql(2);
       });
   });
