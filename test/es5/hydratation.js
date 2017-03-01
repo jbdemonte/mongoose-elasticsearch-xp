@@ -5,7 +5,12 @@ const plugin = require('../../');
 describe('hydratation', () => {
   utils.setup();
 
-  beforeEach(function() {
+  let UserModel;
+  let john;
+  let jane;
+  let bob;
+
+  beforeEach(() => {
     const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -13,18 +18,11 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin);
 
-    const UserModel = mongoose.model('User', UserSchema);
+    UserModel = mongoose.model('User', UserSchema);
 
-    const john = new UserModel({ name: 'John', age: 35 });
-    const jane = new UserModel({ name: 'Jane', age: 34 });
-    const bob = new UserModel({ name: 'Bob', age: 36 });
-
-    this.model = UserModel;
-    this.users = {
-      john,
-      jane,
-      bob,
-    };
+    john = new UserModel({ name: 'John', age: 35 });
+    jane = new UserModel({ name: 'Jane', age: 34 });
+    bob = new UserModel({ name: 'Bob', age: 36 });
 
     return utils
       .deleteModelIndexes(UserModel)
@@ -46,11 +44,7 @@ describe('hydratation', () => {
       });
   });
 
-  it('should hydrate', function() {
-    const UserModel = this.model;
-    const john = this.users.john;
-    const bob = this.users.bob;
-
+  it('should hydrate', () => {
     return UserModel.esSearch(
         {
           query: {
@@ -83,11 +77,7 @@ describe('hydratation', () => {
       });
   });
 
-  it('should hydrate returning only models', function() {
-    const UserModel = this.model;
-    const john = this.users.john;
-    const bob = this.users.bob;
-
+  it('should hydrate returning only models', () => {
     return UserModel.esSearch(
         {
           query: {
@@ -116,33 +106,25 @@ describe('hydratation', () => {
       });
   });
 
-  it(
-    'should return an empty array when hydrating only models on 0 hit',
-    function() {
-      const UserModel = this.model;
-
-      return UserModel.esSearch(
-          {
-            query: {
-              bool: {
-                must: { match_all: {} },
-                filter: { range: { age: { gte: 100 } } },
-              },
+  it('should return an empty array when hydrating only models on 0 hit', () => {
+    return UserModel.esSearch(
+        {
+          query: {
+            bool: {
+              must: { match_all: {} },
+              filter: { range: { age: { gte: 100 } } },
             },
-            sort: [{ age: { order: 'desc' } }],
           },
-          { hydrate: { docsOnly: true } }
-        )
-        .then(users => {
-          expect(users).to.eql([]);
-        });
-    }
-  );
+          sort: [{ age: { order: 'desc' } }],
+        },
+        { hydrate: { docsOnly: true } }
+      )
+      .then(users => {
+        expect(users).to.eql([]);
+      });
+  });
 
-  it('should hydrate using projection', function() {
-    const UserModel = this.model;
-    const jane = this.users.jane;
-
+  it('should hydrate using projection', () => {
     return UserModel.esSearch('name:jane', { hydrate: { select: 'name' } })
       .then(result => {
         expect(result.hits.total).to.eql(1);
@@ -156,10 +138,7 @@ describe('hydratation', () => {
       });
   });
 
-  it('should hydrate using options', function() {
-    const UserModel = this.model;
-    const jane = this.users.jane;
-
+  it('should hydrate using options', () => {
     return UserModel.esSearch('name:jane', {
         hydrate: { options: { lean: true } },
       })
@@ -175,7 +154,7 @@ describe('hydratation', () => {
       });
   });
 
-  it('should hydrate when defined in plugin', function() {
+  it('should hydrate when defined in plugin', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -185,23 +164,21 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: true });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const jane = this.users.jane;
-
-    return UserModel.esSearch('name:jane').then(result => {
+    return UserModelHydrate.esSearch('name:jane').then(result => {
       expect(result.hits.total).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
-      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc).to.be.an.instanceof(UserModelHydrate);
       expect(hit.doc._id.toString()).to.eql(jane._id.toString());
       expect(hit.doc.name).to.eql(jane.name);
       expect(hit.doc.age).to.eql(jane.age);
     });
   });
 
-  it('should hydrate when defined in plugin returning only models', function() {
+  it('should hydrate when defined in plugin returning only models', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -211,12 +188,9 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: { docsOnly: true } });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const john = this.users.john;
-    const bob = this.users.bob;
-
-    return UserModel.esSearch({
+    return UserModelHydrate.esSearch({
         query: {
           bool: {
             must: { match_all: {} },
@@ -241,7 +215,7 @@ describe('hydratation', () => {
       });
   });
 
-  it('should hydrate when defined in plugin using projection', function() {
+  it('should hydrate when defined in plugin using projection', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -251,23 +225,21 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: { select: 'name' } });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const jane = this.users.jane;
-
-    return UserModel.esSearch('name:jane').then(result => {
+    return UserModelHydrate.esSearch('name:jane').then(result => {
       expect(result.hits.total).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
-      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc).to.be.an.instanceof(UserModelHydrate);
       expect(hit.doc._id.toString()).to.eql(jane._id.toString());
       expect(hit.doc.name).to.eql(jane.name);
       expect(hit.doc.age).to.be.undefined;
     });
   });
 
-  it('should hydrate when defined in plugin using options', function() {
+  it('should hydrate when defined in plugin using options', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -277,23 +249,21 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: { options: { lean: true } } });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const jane = this.users.jane;
-
-    return UserModel.esSearch('name:jane').then(result => {
+    return UserModelHydrate.esSearch('name:jane').then(result => {
       expect(result.hits.total).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
-      expect(hit.doc).not.to.be.an.instanceof(UserModel);
+      expect(hit.doc).not.to.be.an.instanceof(UserModelHydrate);
       expect(hit.doc._id.toString()).to.eql(jane._id.toString());
       expect(hit.doc.name).to.eql(jane.name);
       expect(hit.doc.age).to.eql(jane.age);
     });
   });
 
-  it('should hydrate overwriting defined in plugin using options', function() {
+  it('should hydrate overwriting defined in plugin using options', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -303,11 +273,9 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: { options: { lean: true } } });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const jane = this.users.jane;
-
-    return UserModel.esSearch(
+    return UserModelHydrate.esSearch(
       'name:jane',
       { hydrate: { select: 'name' } } // not lean
     ).then(result => {
@@ -315,14 +283,14 @@ describe('hydratation', () => {
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
-      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc).to.be.an.instanceof(UserModelHydrate);
       expect(hit.doc._id.toString()).to.eql(jane._id.toString());
       expect(hit.doc.name).to.eql(jane.name);
       expect(hit.doc.age).to.be.undefined;
     });
   });
 
-  it('should not hydrate overwriting defined in plugin', function() {
+  it('should not hydrate overwriting defined in plugin', () => {
     utils.deleteMongooseModels();
 
     const UserSchema = new mongoose.Schema({
@@ -332,11 +300,9 @@ describe('hydratation', () => {
 
     UserSchema.plugin(plugin, { hydrate: { options: { lean: true } } });
 
-    const UserModel = mongoose.model('User', UserSchema);
+    const UserModelHydrate = mongoose.model('User', UserSchema);
 
-    const jane = this.users.jane;
-
-    return UserModel.esSearch(
+    return UserModelHydrate.esSearch(
       'name:jane',
       { hydrate: false } // not lean
     ).then(result => {

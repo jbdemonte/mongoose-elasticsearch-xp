@@ -101,7 +101,7 @@ describe('esSynchronise', () => {
           })
         );
       });
-  }).timeout(5000);
+  });
 
   it('should index a subset', () => {
     const users = [];
@@ -186,7 +186,7 @@ describe('esSynchronise', () => {
           expect(ids).to.eql(expected);
         });
       });
-  }).timeout(5000);
+  });
 
   it('should index the database using projection', () => {
     const users = [];
@@ -284,7 +284,7 @@ describe('esSynchronise', () => {
           })
         );
       });
-  }).timeout(5000);
+  });
 
   it('should index the database in callback mode', () => {
     const users = [];
@@ -388,7 +388,7 @@ describe('esSynchronise', () => {
           })
         );
       });
-  }).timeout(5000);
+  });
 
   it('should index a subset in callback mode', () => {
     const users = [];
@@ -479,7 +479,7 @@ describe('esSynchronise', () => {
           expect(ids).to.eql(expected);
         });
       });
-  }).timeout(5000);
+  });
 
   it('should index the database using projection in callback mode', () => {
     const users = [];
@@ -583,7 +583,7 @@ describe('esSynchronise', () => {
           })
         );
       });
-  }).timeout(5000);
+  });
 
   it('should index filtering', () => {
     const users = [];
@@ -683,5 +683,5 @@ describe('esSynchronise', () => {
           })
         );
       });
-  }).timeout(5000);
+  });
 });

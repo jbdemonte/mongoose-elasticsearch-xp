@@ -5,7 +5,9 @@ const plugin = require('../../');
 describe('idsOnly', () => {
   utils.setup();
   let UserModel;
-  let users;
+  let john;
+  let jane;
+  let bob;
 
   beforeEach(() => {
     const UserSchema = new mongoose.Schema({
@@ -17,15 +19,9 @@ describe('idsOnly', () => {
 
     UserModel = mongoose.model('User', UserSchema);
 
-    const john = new UserModel({ name: 'John', age: 35 });
-    const jane = new UserModel({ name: 'Jane', age: 34 });
-    const bob = new UserModel({ name: 'Bob', age: 36 });
-
-    users = {
-      john,
-      jane,
-      bob,
-    };
+    john = new UserModel({ name: 'John', age: 35 });
+    jane = new UserModel({ name: 'Jane', age: 34 });
+    bob = new UserModel({ name: 'Bob', age: 36 });
 
     return utils
       .deleteModelIndexes(UserModel)
@@ -48,9 +44,6 @@ describe('idsOnly', () => {
   });
 
   it('should return ids', () => {
-    const john = users.john;
-    const bob = users.bob;
-
     return UserModel.esSearch(
         {
           query: {
@@ -102,8 +95,6 @@ describe('idsOnly', () => {
     UserSchema.plugin(plugin, { idsOnly: true });
 
     const UserModelIdsOnly = mongoose.model('User', UserSchema);
-    const john = users.john;
-    const bob = users.bob;
 
     return UserModelIdsOnly.esSearch({
         query: {
@@ -135,8 +126,6 @@ describe('idsOnly', () => {
     UserSchema.plugin(plugin, { idsOnly: true });
 
     const UserModelIdsOnly = mongoose.model('User', UserSchema);
-    const john = users.john;
-    const bob = users.bob;
 
     return UserModelIdsOnly.esSearch(
         {

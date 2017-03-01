@@ -5,7 +5,9 @@ const plugin = require('../../');
 describe('esSearch', () => {
   utils.setup();
   let UserModel;
-  let users;
+  let john;
+  let jane;
+  let bob;
 
   beforeEach(() => {
     const UserSchema = new mongoose.Schema({
@@ -16,15 +18,9 @@ describe('esSearch', () => {
     UserSchema.plugin(plugin);
     UserModel = mongoose.model('User', UserSchema);
 
-    const john = new UserModel({ name: 'John', age: 35 });
-    const jane = new UserModel({ name: 'Jane', age: 34 });
-    const bob = new UserModel({ name: 'Bob', age: 36 });
-
-    users = {
-      john,
-      jane,
-      bob,
-    };
+    john = new UserModel({ name: 'John', age: 35 });
+    jane = new UserModel({ name: 'Jane', age: 34 });
+    bob = new UserModel({ name: 'Bob', age: 36 });
 
     return utils
       .deleteModelIndexes(UserModel)
@@ -70,7 +66,7 @@ describe('esSearch', () => {
     return UserModel.esSearch('name:jane').then(result => {
       expect(result.hits.total).to.eql(1);
       const hit = result.hits.hits[0];
-      expect(hit._id).to.eql(users.jane._id.toString());
+      expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
     });
   });
@@ -83,7 +79,7 @@ describe('esSearch', () => {
       }
       expect(result.hits.total).to.eql(1);
       const hit = result.hits.hits[0];
-      expect(hit._id).to.eql(users.jane._id.toString());
+      expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
       expect(returned).to.be.undefined;
       done();
@@ -98,7 +94,7 @@ describe('esSearch', () => {
       }
       expect(result.hits.total).to.eql(1);
       const hit = result.hits.hits[0];
-      expect(hit._id).to.eql(users.jane._id.toString());
+      expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
       expect(returned).to.be.undefined;
       done();
@@ -115,7 +111,7 @@ describe('esSearch', () => {
       .then(result => {
         expect(result.hits.total).to.eql(1);
         const hit = result.hits.hits[0];
-        expect(hit._id).to.eql(users.jane._id.toString());
+        expect(hit._id).to.eql(jane._id.toString());
         expect(hit._source).to.eql({ name: 'Jane', age: 34 });
       });
   });
@@ -124,7 +120,7 @@ describe('esSearch', () => {
     return UserModel.esSearch({ match: { age: 34 } }).then(result => {
       expect(result.hits.total).to.eql(1);
       const hit = result.hits.hits[0];
-      expect(hit._id).to.eql(users.jane._id.toString());
+      expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
     });
   });
