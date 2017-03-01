@@ -15,14 +15,20 @@
     "type": "git",
     "url": "git@github.com:jbdemonte/mongoose-elasticsearch-xp.git"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "main": "index.js",
   "scripts": {
-    "test-v2": "./node_modules/mocha/bin/mocha test/es2/*",
-    "test-v2-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./test/es2/*",
-    "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/es2/*",
-    "test-v5": "./node_modules/mocha/bin/mocha test/es5/*",
-    "test-v5-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./test/es5/*",
-    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/es5/*"
+    "docker-v2": "node ./scripts/docker/start 2 & wait",
+    "docker-v5": "node ./scripts/docker/start 5 & wait",
+    "test-v2": "./node_modules/mocha/bin/mocha -t 10000 test/es2/*",
+    "test-v2-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
+    "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es2/*",
+    "test-v5": "./node_modules/mocha/bin/mocha -t 10000 test/es5/*",
+    "test-v5-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
+    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
