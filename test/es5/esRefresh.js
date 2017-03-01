@@ -1,3 +1,5 @@
+'use strict';
+
 const utils = require('../utils');
 const mongoose = require('mongoose');
 const plugin = require('../../');

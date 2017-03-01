@@ -1,3 +1,5 @@
+'use strict';
+
 const bluebird = require('bluebird');
 const utils = require('../utils');
 const mongoose = require('mongoose');

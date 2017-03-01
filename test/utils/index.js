@@ -1,22 +1,18 @@
-var _Promise = require('bluebird');
-var mongoose = require('mongoose');
-mongoose.Promise = _Promise;
+'use strict';
 
-module.exports = {
-  Promise: _Promise,
-  setup: setup,
-  deleteModelIndexes: deleteModelIndexes,
-  deleteMongooseModels: deleteMongooseModels,
-};
+const _Promise = require('bluebird');
+const mongoose = require('mongoose');
+
+mongoose.Promise = _Promise;
 
 function array(mixed) {
   return Array.isArray(mixed) ? mixed : [mixed];
 }
 
 function setup() {
-  before(function(done) {
-    global.expect = require('chai').expect;
-    mongoose.connect('mongodb://localhost/test', function(err) {
+  before(done => {
+    global.expect = require('chai').expect; // eslint-disable-line
+    mongoose.connect('mongodb://localhost/test', err => {
       if (err) {
         done(err);
       } else {
@@ -25,12 +21,12 @@ function setup() {
     });
   });
 
-  beforeEach(function() {
+  beforeEach(() => {
     deleteMongooseModels();
   });
 
-  after(function(done) {
-    mongoose.disconnect(function() {
+  after(done => {
+    mongoose.disconnect(() => {
       done();
     });
   });
@@ -39,24 +35,31 @@ function setup() {
 function deleteModelIndexes(models) {
   return _Promise
     .all(
-      array(models).map(function(model) {
-        return new _Promise(function(resolve) {
-          var options = model.esOptions();
-          var client = options.client;
-          client.indices.delete({ index: options.index }, function(err) {
+      array(models).map(model => {
+        return new _Promise(resolve => {
+          const options = model.esOptions();
+          const client = options.client;
+          client.indices.delete({ index: options.index }, () => {
             resolve();
           });
         });
       })
     )
-    .then(function() {
+    .then(() => {
       // do nothing, just remove the results to allows to use .then(done)
     });
 }
 
 function deleteMongooseModels() {
-  Object.keys(mongoose.models).forEach(function(name) {
+  Object.keys(mongoose.models).forEach(name => {
     delete mongoose.models[name];
     delete mongoose.modelSchemas[name];
   });
 }
+
+module.exports = {
+  Promise: _Promise,
+  setup,
+  deleteModelIndexes,
+  deleteMongooseModels,
+};
