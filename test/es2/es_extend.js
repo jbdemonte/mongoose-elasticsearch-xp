@@ -1,88 +1,86 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../').v2;
+'use strict';
 
-describe("es_extend", function () {
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../').v2;
 
+describe('es_extend', () => {
   utils.setup();
 
-  it('should add some fields', function (done) {
+  it('should add some fields', () => {
+    let john;
 
-    var UserSchema = new mongoose.Schema(
+    const UserSchema = new mongoose.Schema(
       {
-        name: String
+        name: String,
       },
       {
         es_extend: {
           num: {
             es_type: 'integer',
-            es_value: 123
+            es_value: 123,
           },
           length: {
             es_type: 'integer',
-            es_value: function (document) {
+            es_value(document) {
               expect(document === john).to.be.true;
               return document.name.length;
-            }
-          }
-        }
+            },
+          },
+        },
       }
     );
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({
-      name: 'John'
+    john = new UserModel({
+      name: 'John',
     });
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
-        var options = UserModel.esOptions();
+      .then(() => {
+        const options = UserModel.esOptions();
         return options.client.indices.getMapping({
           index: options.index,
-          type: options.type
+          type: options.type,
         });
       })
-      .then(function (mapping) {
-        var properties = mapping.users.mappings.user.properties;
+      .then(mapping => {
+        const properties = mapping.users.mappings.user.properties;
         expect(properties).to.have.all.keys('name', 'num', 'length');
         expect(properties.name.type).to.be.equal('string');
         expect(properties.num.type).to.be.equal('integer');
         expect(properties.length.type).to.be.equal('integer');
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          john.on('es-indexed', function () {
+      .then(() => {
+        return new utils.Promise(resolve => {
+          john.on('es-indexed', () => {
             resolve();
           });
           john.save();
         });
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esRefresh();
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esSearch({
-          query: {match_all: {}}
+          query: { match_all: {} },
         });
       })
-      .then(function (result) {
+      .then(result => {
         expect(result.hits.total).to.eql(1);
         expect(result.hits.hits[0]._source).to.eql({
-          "name": "John",
-          "num": 123,
-          "length": 4
+          name: 'John',
+          num: 123,
+          length: 4,
         });
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
-
   });
 });

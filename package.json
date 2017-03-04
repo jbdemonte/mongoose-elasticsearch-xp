@@ -15,14 +15,20 @@
     "type": "git",
     "url": "git@github.com:jbdemonte/mongoose-elasticsearch-xp.git"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "main": "index.js",
   "scripts": {
-    "test-v2": "./node_modules/mocha/bin/mocha test/es2/*",
-    "test-v2-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./test/es2/*",
-    "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/es2/*",
-    "test-v5": "./node_modules/mocha/bin/mocha test/es5/*",
-    "test-v5-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./test/es5/*",
-    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/es5/*"
+    "docker-v2": "node ./scripts/docker/start 2 & wait",
+    "docker-v5": "node ./scripts/docker/start 5 & wait",
+    "test-v2": "./node_modules/mocha/bin/mocha -t 10000 test/es2/*",
+    "test-v2-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
+    "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es2/*",
+    "test-v5": "./node_modules/mocha/bin/mocha -t 10000 test/es5/*",
+    "test-v5-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
+    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
@@ -34,7 +40,14 @@
     "bluebird": "^3.4.6",
     "chai": "^3.5.0",
     "coveralls": "^2.11.14",
+    "eslint": "^3.16.1",
+    "eslint-config-airbnb-base": "^11.1.0",
+    "eslint-config-prettier": "^1.4.0",
+    "eslint-plugin-chai-expect": "^1.1.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-prettier": "^2.0.1",
     "istanbul": "^0.4.5",
-    "mocha": "^2.5.3"
+    "mocha": "^3.2.0",
+    "prettier": "^0.19.0"
   }
 }

@@ -4,8 +4,7 @@ var utils = require('./lib/utils');
 var Bulker = require('./lib/bulker');
 var mongoose = require('mongoose');
 
-
-module.exports = function (schema, options, version) {
+module.exports = function(schema, options, version) {
   // clone main level of options (does not clone deeper)
   options = utils.highClone(options);
 
@@ -23,7 +22,11 @@ module.exports = function (schema, options, version) {
     }
 
     if (!options.index || !options.type) {
-      throw new Error(options.index ? 'Missing model name to build ES type' : 'Missing collection name to build ES index');
+      throw new Error(
+        options.index
+          ? 'Missing model name to build ES type'
+          : 'Missing collection name to build ES index'
+      );
     }
 
     if (!options.client) {
@@ -36,7 +39,7 @@ module.exports = function (schema, options, version) {
 
     if (!options.mapping) {
       options.mapping = Object.freeze({
-        properties: generateMapping(this.schema, version)
+        properties: generateMapping(this.schema, version),
       });
     }
 
@@ -63,7 +66,7 @@ module.exports = function (schema, options, version) {
   schema.post('findOneAndRemove', postRemove);
 };
 
-module.exports.v2 = function (schema, options) {
+module.exports.v2 = function(schema, options) {
   return module.exports(schema, options, 2);
 };
 
@@ -80,7 +83,7 @@ function createMapping(settings, callback) {
     settings = null;
   }
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
 
     settings = settings || esOptions.mappingSettings || {};
@@ -88,7 +91,7 @@ function createMapping(settings, callback) {
     var mapping = {};
     mapping[esOptions.type] = esOptions.mapping;
 
-    esOptions.client.indices.exists({index: esOptions.index}, function (err, exists) {
+    esOptions.client.indices.exists({ index: esOptions.index }, function(err, exists) {
       if (err) {
         return reject(err);
       }
@@ -97,9 +100,9 @@ function createMapping(settings, callback) {
           {
             index: esOptions.index,
             type: esOptions.type,
-            body: mapping
+            body: mapping,
           },
-          function (err, result) {
+          function(err, result) {
             return err ? reject(err) : resolve(result);
           }
         );
@@ -107,9 +110,9 @@ function createMapping(settings, callback) {
       return esOptions.client.indices.create(
         {
           index: esOptions.index,
-          body: settings
+          body: settings,
         },
-        function (err) {
+        function(err) {
           if (err) {
             return reject(err);
           }
@@ -117,9 +120,9 @@ function createMapping(settings, callback) {
             {
               index: esOptions.index,
               type: esOptions.type,
-              body: mapping
+              body: mapping,
             },
-            function (err, result) {
+            function(err, result) {
               return err ? reject(err) : resolve(result);
             }
           );
@@ -143,17 +146,24 @@ function refresh(options, callback) {
   }
   options = options || {};
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
-    var refreshDelay = options.refreshDelay === false ? 0 : options.refreshDelay || esOptions.refreshDelay;
-    esOptions.client.indices.refresh({
-      index: esOptions.index
-    },
-    function (err, result) {
-      setTimeout(function () {
-        return err ? reject(err) : resolve(result);
-      }, refreshDelay);
-    });
+    var refreshDelay = options.refreshDelay === false
+      ? 0
+      : options.refreshDelay || esOptions.refreshDelay;
+    esOptions.client.indices.refresh(
+      {
+        index: esOptions.index,
+      },
+      function(err, result) {
+        setTimeout(
+          function() {
+            return err ? reject(err) : resolve(result);
+          },
+          refreshDelay
+        );
+      }
+    );
   });
 }
 
@@ -173,19 +183,19 @@ function count(query, options, callback) {
   query = query || {};
   options = options || {};
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
     var countOnly = options.countOnly === false ? false : options.countOnly || esOptions.countOnly;
     var params = {
       index: esOptions.index,
-      type: esOptions.type
+      type: esOptions.type,
     };
     if (typeof query === 'string') {
       params.q = query;
     } else {
-      params.body = query.query ? query : {query: query};
+      params.body = query.query ? query : { query: query };
     }
-    esOptions.client.count(params, function (err, result) {
+    esOptions.client.count(params, function(err, result) {
       if (err) {
         reject(err);
       } else {
@@ -211,25 +221,25 @@ function search(query, options, callback) {
   query = query || {};
   options = options || {};
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
     var hydrate = options.hydrate === false ? false : options.hydrate || esOptions.hydrate;
     var idsOnly = options.idsOnly === false ? false : options.idsOnly || esOptions.idsOnly;
 
     var params = {
       index: esOptions.index,
-      type: esOptions.type
+      type: esOptions.type,
     };
 
     if (typeof query === 'string') {
       params.q = query;
     } else {
-      params.body = query.query ? query : {query: query};
+      params.body = query.query ? query : { query: query };
     }
     if (hydrate) {
       params._source = false;
     }
-    esOptions.client.search(params, function (err, result) {
+    esOptions.client.search(params, function(err, result) {
       if (err) {
         return reject(err);
       }
@@ -238,7 +248,7 @@ function search(query, options, callback) {
         return resolve(result);
       }
 
-      var ids = result.hits.hits.map(function (hit) {
+      var ids = result.hits.hits.map(function(hit) {
         return mongoose.Types.ObjectId(hit._id);
       });
 
@@ -254,27 +264,25 @@ function search(query, options, callback) {
         return resolve(docsOnly ? [] : result);
       }
 
-
-      self.find({_id: {$in: ids}}, select, opts, function (err, users) {
+      self.find({ _id: { $in: ids } }, select, opts, function(err, users) {
         if (err) {
           return reject(err);
         }
         var userByIds = {};
-        users.forEach(function (user) {
+        users.forEach(function(user) {
           userByIds[user._id] = user;
         });
         if (docsOnly) {
-          result = ids.map(function (id) {
+          result = ids.map(function(id) {
             return userByIds[id];
           });
         } else {
-          result.hits.hits.forEach(function (hit) {
+          result.hits.hits.forEach(function(hit) {
             hit.doc = userByIds[hit._id];
           });
         }
         return resolve(result);
       });
-
     });
   });
 }
@@ -303,7 +311,7 @@ function synchronize(conditions, projection, options, callback) {
     options = null;
   }
   var model = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = model.esOptions();
     var batch = esOptions.bulk && esOptions.bulk.batch ? esOptions.bulk.batch : 50;
     var stream = model.find(conditions || {}, projection, options).batchSize(batch).stream();
@@ -313,12 +321,9 @@ function synchronize(conditions, projection, options, callback) {
     function finalize() {
       bulker.removeListener('error', onError);
       bulker.removeListener('sent', onSent);
-      esOptions.client.indices.refresh(
-        {index: esOptions.index},
-        function (err, result) {
-          return err ? reject(err) : resolve(result);
-        }
-      );
+      esOptions.client.indices.refresh({ index: esOptions.index }, function(err, result) {
+        return err ? reject(err) : resolve(result);
+      });
     }
 
     function onError(err) {
@@ -342,12 +347,12 @@ function synchronize(conditions, projection, options, callback) {
     bulker.on('error', onError);
     bulker.on('sent', onSent);
 
-    stream.on('data', function (doc) {
+    stream.on('data', function(doc) {
       stream.pause();
       var sending;
       if (!esOptions.filter || esOptions.filter(doc)) {
         sending = bulker.push(
-          {index: {_index: esOptions.index, _type: esOptions.type, _id: doc._id.toString()}},
+          { index: { _index: esOptions.index, _type: esOptions.type, _id: doc._id.toString() } },
           utils.serialize(doc, esOptions.mapping)
         );
         model.emit('es-bulk-data', doc);
@@ -359,7 +364,7 @@ function synchronize(conditions, projection, options, callback) {
       }
     });
 
-    stream.on('close', function () {
+    stream.on('close', function() {
       streamClosed = true;
       if (bulker.filled()) {
         bulker.flush();
@@ -383,11 +388,11 @@ function indexDoc(update, callback) {
     callback = update;
     update = false;
   }
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
     var body = utils.serialize(self, esOptions.mapping);
     if (update && update.unset) {
-      (typeof update.unset === 'string' ? [update.unset] : update.unset).forEach(function (field) {
+      (typeof update.unset === 'string' ? [update.unset] : update.unset).forEach(function(field) {
         body[field] = null;
       });
     }
@@ -411,9 +416,9 @@ function _indexDoc(id, body, esOptions, resolve, reject, update) {
       index: esOptions.index,
       type: esOptions.type,
       id: id.toString(),
-      body: update ? {doc: body}: body
+      body: update ? { doc: body } : body,
     },
-    function (err, result) {
+    function(err, result) {
       if (update && err && err.status === 404) {
         _indexDoc(id, body, esOptions, resolve, reject);
       } else {
@@ -431,7 +436,7 @@ function _indexDoc(id, body, esOptions, resolve, reject, update) {
  */
 function unsetFields(fields, callback) {
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
     var body;
 
@@ -441,13 +446,15 @@ function unsetFields(fields, callback) {
 
     if (esOptions.script) {
       body = {
-        script: fields.map(function (field) {
-          return 'ctx._source.remove("' + field + '")';
-        }).join(';')
+        script: fields
+          .map(function(field) {
+            return 'ctx._source.remove("' + field + '")';
+          })
+          .join(';'),
       };
     } else {
-      body = {doc: {}};
-      fields.forEach(function (field) {
+      body = { doc: {} };
+      fields.forEach(function(field) {
         body.doc[field] = null;
       });
     }
@@ -457,9 +464,9 @@ function unsetFields(fields, callback) {
         index: esOptions.index,
         type: esOptions.type,
         id: self._id.toString(),
-        body: body
+        body: body,
       },
-      function (err, result) {
+      function(err, result) {
         return err ? reject(err) : resolve(result);
       }
     );
@@ -474,15 +481,15 @@ function unsetFields(fields, callback) {
  */
 function removeDoc(callback) {
   var self = this;
-  return utils.run(callback, function (resolve, reject) {
+  return utils.run(callback, function(resolve, reject) {
     var esOptions = self.esOptions();
     esOptions.client.delete(
       {
         index: esOptions.index,
         type: esOptions.type,
-        id: self._id.toString()
+        id: self._id.toString(),
       },
-      function (err) {
+      function(err) {
         if (err) {
           reject(err);
         } else {
@@ -500,7 +507,7 @@ function removeDoc(callback) {
  */
 function preSave(next) {
   this._mexp = {
-    wasNew: this.isNew
+    wasNew: this.isNew,
   };
   if (!this.isNew) {
     this._mexp.unset = utils.getUndefineds(this, this.esOptions().mapping);
@@ -515,23 +522,23 @@ function preSave(next) {
  */
 function postSave(doc) {
   if (doc && doc.esOptions) {
-    var data = doc._mexp || {};
+    var data = doc._mexp || {};
     var esOptions = doc.esOptions();
     delete doc._mexp;
     if (!esOptions.filter || esOptions.filter(doc)) {
       doc
-        .esIndex(data.wasNew ? false : {unset: data.unset})
-        .then(function (res) {
+        .esIndex(data.wasNew ? false : { unset: data.unset })
+        .then(function(res) {
           if (esOptions.script && data.unset && data.unset.length) {
             return doc.esUnset(data.unset);
           }
           return res;
         })
-        .then(function (res) {
+        .then(function(res) {
           doc.emit('es-indexed', undefined, res);
           doc.constructor.emit('es-indexed', undefined, res);
         })
-        .catch(function (err) {
+        .catch(function(err) {
           doc.emit('es-indexed', err);
           doc.constructor.emit('es-indexed', err);
         });
@@ -539,7 +546,7 @@ function postSave(doc) {
       doc.emit('es-filtered');
       doc.constructor.emit('es-filtered');
       if (!data.wasNew) {
-        doc.esRemove(function (err, res) {
+        doc.esRemove(function(err, res) {
           doc.emit('es-removed', err, res);
           doc.constructor.emit('es-removed', err, res);
         });
@@ -555,7 +562,7 @@ function postSave(doc) {
  */
 function postRemove(doc) {
   if (doc && doc.esOptions) {
-    doc.esRemove(function (err, res) {
+    doc.esRemove(function(err, res) {
       doc.emit('es-removed', err, res);
       doc.constructor.emit('es-removed', err, res);
     });

@@ -1,187 +1,172 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../');
+'use strict';
 
-describe("esRefresh", function () {
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../');
 
+describe('esRefresh', () => {
   utils.setup();
 
-  it('should handle callback', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should handle callback', done => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
     UserSchema.plugin(plugin);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    let start;
 
-    var start;
-
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
-        UserModel.esRefresh(function (err) {
+        UserModel.esRefresh(err => {
           if (err) {
-            return done(err);
+            done(err);
+            return;
           }
           expect(Date.now() - start).to.be.lt(500);
           done();
         });
       })
-      .catch(function (err) {
+      .catch(err => {
         done(err);
       });
   });
 
-  it('should handle callback and options', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should handle callback and options', done => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var start;
+    let start;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
-        UserModel.esRefresh({refreshDelay: 1000}, function (err) {
+        UserModel.esRefresh({ refreshDelay: 1000 }, err => {
           if (err) {
-            return done(err);
+            done(err);
+            return;
           }
           expect(Date.now() - start).to.be.gte(1000);
           done();
         });
       })
-      .catch(function (err) {
+      .catch(err => {
         done(err);
       });
   });
 
-  it('should not be delayed', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should not be delayed', () => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var start;
+    let start;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
         return UserModel.esRefresh();
       })
-      .then(function () {
+      .then(() => {
         expect(Date.now() - start).to.be.lt(500);
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should be delayed', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should be delayed', () => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var start;
+    let start;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
-        return UserModel.esRefresh({refreshDelay: 1000});
+        return UserModel.esRefresh({ refreshDelay: 1000 });
       })
-      .then(function () {
+      .then(() => {
         expect(Date.now() - start).to.be.gte(1000);
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should be delayed when defined in plugin', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should be delayed when defined in plugin', () => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
-    UserSchema.plugin(plugin, {refreshDelay: 1000});
+    UserSchema.plugin(plugin, { refreshDelay: 1000 });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var start;
+    let start;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
         return UserModel.esRefresh();
       })
-      .then(function () {
+      .then(() => {
         expect(Date.now() - start).to.be.gte(1000);
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should overwrite defined in plugin value', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String
+  it('should overwrite defined in plugin value', () => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
     });
 
-    UserSchema.plugin(plugin, {refreshDelay: 1000});
+    UserSchema.plugin(plugin, { refreshDelay: 1000 });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var start;
+    let start;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         start = Date.now();
-        return UserModel.esRefresh({refreshDelay: false});
+        return UserModel.esRefresh({ refreshDelay: false });
       })
-      .then(function () {
+      .then(() => {
         expect(Date.now() - start).to.be.lt(500);
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
-
 });

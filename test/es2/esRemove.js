@@ -1,79 +1,101 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../').v2;
+'use strict';
 
-describe("esRemove", function () {
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../').v2;
 
+describe('esRemove', () => {
   utils.setup();
 
-  it('should be removed', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should be removed', () => {
+    const UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({name: 'John', age: 35});
-    var jane = new UserModel({name: 'Jane', age: 34});
-    var bob = new UserModel({name: 'Bob', age: 36});
+    const john = new UserModel({ name: 'John', age: 35 });
+    const jane = new UserModel({ name: 'Jane', age: 34 });
+    const bob = new UserModel({ name: 'Bob', age: 36 });
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.bulk({
-            refresh: true,
-            body: [
-              { index:  { _index: options.index, _type: options.type, _id: john._id.toString() } },
-              {name: 'John', age: 35},
-              { index:  { _index: options.index, _type: options.type, _id: jane._id.toString() } },
-              {name: 'Jane', age: 34},
-              { index:  { _index: options.index, _type: options.type, _id: bob._id.toString() } },
-              {name: 'Bob', age: 36}
-            ]
-          }, function (err) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.bulk(
+            {
+              refresh: true,
+              body: [
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: john._id.toString(),
+                  },
+                },
+                { name: 'John', age: 35 },
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: jane._id.toString(),
+                  },
+                },
+                { name: 'Jane', age: 34 },
+                {
+                  index: {
+                    _index: options.index,
+                    _type: options.type,
+                    _id: bob._id.toString(),
+                  },
+                },
+                { name: 'Bob', age: 36 },
+              ],
+            },
+            err => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
             }
-          });
+          );
         });
       })
-      .then(function () {
+      .then(() => {
         return jane.esRemove();
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esRefresh();
       })
-      .then(function () {
-        var options = UserModel.esOptions();
-        var client = options.client;
-        client.search({index: options.index, type: options.type, body: {query: {match_all: {}}}}, function (err, resp) {
-          var ids = resp.hits.hits.map(function (hit) {
-            return hit._id;
-          });
-          ids.sort();
-
-          var expectedIds = [john, bob].map(function (user) {
-            return user._id.toString();
-          });
-
-          expect(ids).to.eql(expectedIds);
-          done();
+      .then(() => {
+        const options = UserModel.esOptions();
+        const client = options.client;
+        return client.search({
+          index: options.index,
+          type: options.type,
+          body: { query: { match_all: {} } },
         });
       })
-      .catch(function (err) {
-        done(err);
+      .then(resp => {
+        const ids = resp.hits.hits.map(hit => {
+          return hit._id;
+        });
+        ids.sort();
+
+        const expectedIds = [john, bob].map(user => {
+          return user._id.toString();
+        });
+
+        expect(ids).to.eql(expectedIds);
       });
   });
-
 });

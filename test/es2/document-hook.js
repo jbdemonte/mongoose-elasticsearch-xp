@@ -1,44 +1,76 @@
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var plugin = require('../../').v2;
+'use strict';
 
-describe("document-hook", function () {
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const plugin = require('../../').v2;
 
+describe('document-hook', () => {
   utils.setup();
 
-  it('should be able to save without any previous call to ES', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should be able to save without any previous call to ES', () => {
+    let UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    let UserModel = mongoose.model('User', UserSchema);
 
-    var user;
+    let user;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         return utils.deleteMongooseModels();
       })
-      .then(function () {
+      .then(() => {
         // recreate new model
         UserSchema = new mongoose.Schema({
           name: String,
-          age: Number
+          age: Number,
         });
         UserSchema.plugin(plugin);
         UserModel = mongoose.model('User', UserSchema);
-        user = new UserModel({name: 'John', age: 35});
+        user = new UserModel({ name: 'John', age: 35 });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-indexed', err => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          user.save();
+        });
+      });
+  });
+
+  it('should be indexed then removed', () => {
+    const UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+    });
+
+    UserSchema.plugin(plugin);
+
+    const UserModel = mongoose.model('User', UserSchema);
+
+    const user = new UserModel({ name: 'John', age: 35 });
+
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
+        return UserModel.esCreateMapping();
+      })
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -48,59 +80,29 @@ describe("document-hook", function () {
           user.save();
         });
       })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
-      });
-  });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
 
-  it('should be indexed then removed', function (done) {
-
-    var UserSchema = new mongoose.Schema({
-      name: String,
-      age: Number
-    });
-
-    UserSchema.plugin(plugin);
-
-    var UserModel = mongoose.model('User', UserSchema);
-
-    var user = new UserModel({name: 'John', age: 35});
-
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
-        return UserModel.esCreateMapping();
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-indexed', function (err) {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
-          user.save();
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({ name: 'John', age: 35 });
+              resolve();
+            }
+          );
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35});
-            resolve();
-          });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-removed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-removed', err => {
             if (err) {
               reject(err);
             } else {
@@ -110,304 +112,337 @@ describe("document-hook", function () {
           user.remove();
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
 
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(false);
-            expect(resp._id).to.eql(user._id.toString());
-            resolve();
-          });
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(false);
+              expect(resp._id).to.eql(user._id.toString());
+              resolve();
+            }
+          );
         });
-      })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should emit same event from model', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should emit same event from model', () => {
+    const UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({name: 'John', age: 35});
-    var jane = new UserModel({name: 'Jane', age: 34});
-    var bob = new UserModel({name: 'Bob', age: 36});
-    var users = [john, jane, bob];
+    const john = new UserModel({ name: 'John', age: 35 });
+    const jane = new UserModel({ name: 'Jane', age: 34 });
+    const bob = new UserModel({ name: 'Bob', age: 36 });
+    const users = [john, jane, bob];
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
-        var count = 0;
-        return new utils.Promise(function (resolve, reject) {
-          UserModel.on('es-indexed', function (err) {
+      .then(() => {
+        let count = 0;
+        return new utils.Promise((resolve, reject) => {
+          UserModel.on('es-indexed', err => {
             if (err) {
-              return reject(err);
+              reject(err);
+              return;
             }
             count++;
             if (count === 3) {
-              setTimeout(function () { // delay to check if more than 3 are received
-                resolve();
-              }, 500);
+              setTimeout(
+                () => {
+                  // delay to check if more than 3 are received
+                  resolve();
+                },
+                500
+              );
             } else if (count > 3) {
               reject(new Error('more than 3 event were emitted'));
             }
           });
-          users.forEach(function (user) {
+          users.forEach(user => {
             user.save();
           });
         });
       })
-      .then(function () {
-        var count = 0;
-        return new utils.Promise(function (resolve, reject) {
-          UserModel.on('es-removed', function (err) {
+      .then(() => {
+        let count = 0;
+        return new utils.Promise((resolve, reject) => {
+          UserModel.on('es-removed', err => {
             if (err) {
-              return reject(err);
+              reject(err);
+              return;
             }
             count++;
             if (count === 3) {
-              setTimeout(function () { // delay to check if more than 3 are received
-                resolve();
-              }, 500);
+              setTimeout(
+                () => {
+                  // delay to check if more than 3 are received
+                  resolve();
+                },
+                500
+              );
             } else if (count > 3) {
               reject(new Error('more than 3 event were emitted'));
             }
           });
-          users.forEach(function (user) {
+          users.forEach(user => {
             user.remove();
           });
         });
-      })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should use filter', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should use filter', () => {
+    const UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
-    UserSchema.plugin(plugin, {filter: function (doc) {
-      return doc.age >= 80;
-    }});
+    UserSchema.plugin(plugin, {
+      filter(doc) {
+        return doc.age >= 80;
+      },
+    });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var john = new UserModel({name: 'John', age: 35});
-    var henry = new UserModel({name: 'Henry', age: 85});
+    const john = new UserModel({ name: 'John', age: 35 });
+    const henry = new UserModel({ name: 'Henry', age: 85 });
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          john.on('es-filtered', function () {
+      .then(() => {
+        return new utils.Promise(resolve => {
+          john.on('es-filtered', () => {
             resolve();
           });
           john.save();
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          henry.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          henry.on('es-indexed', err => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          henry.save();
+        });
+      })
+      .then(() => {
+        return UserModel.esRefresh();
+      })
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.search(
+            {
+              index: options.index,
+              type: options.type,
+              body: { query: { match_all: {} } },
+            },
+            (err, resp) => {
+              expect(resp.hits.total).to.eql(1);
+              const hit = resp.hits.hits[0];
+              expect(hit._id).to.eql(henry._id.toString());
+              expect(hit._source).to.eql({ name: 'Henry', age: 85 });
+              resolve();
+            }
+          );
+        });
+      });
+  });
+
+  it('should handle partial save', () => {
+    const CitySchema = new mongoose.Schema({
+      _id: false,
+      name: String,
+    });
+
+    const UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+      city: {
+        type: CitySchema,
+        select: false,
+      },
+    });
+
+    UserSchema.plugin(plugin);
+
+    let UserModel = mongoose.model('User', UserSchema);
+
+    let user;
+
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
+        return UserModel.esCreateMapping();
+      })
+      .then(() => {
+        UserModel = mongoose.model('User', UserSchema);
+        user = new UserModel({
+          name: 'John',
+          age: 35,
+          city: { name: 'Paris' },
+        });
+      })
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-indexed', err => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          user.save();
+        });
+      })
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 35,
+                city: { name: 'Paris' },
+              });
+              resolve();
+            }
+          );
+        });
+      })
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          UserModel.findById(user._id).then(dbUser => {
+            dbUser.age = 36;
+            expect(dbUser.city).to.be.undefined; // because of select false
+
+            dbUser.on('es-indexed', err => {
               if (err) {
                 reject(err);
               } else {
                 resolve();
               }
             });
-          henry.save();
-        });
-      })
-      .then(function () {
-        return UserModel.esRefresh();
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.search({index: options.index, type: options.type, body: {query: {match_all: {}}}}, function (err, resp) {
-            expect(resp.hits.total).to.eql(1);
-            var hit = resp.hits.hits[0];
-            expect(hit._id).to.eql(henry._id.toString());
-            expect(hit._source).to.eql({name: 'Henry', age: 85});
-            resolve();
+            dbUser.save();
           });
         });
       })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
-      });
-  });
-
-  it('should handle partial save', function (done) {
-
-    var CitySchema = new mongoose.Schema({
-      _id: false,
-      name: String
-    });
-
-    var UserSchema = new mongoose.Schema({
-      name: String,
-      age: Number,
-      city: {
-        type: CitySchema,
-        select: false
-      }
-    });
-
-    UserSchema.plugin(plugin);
-
-    var UserModel = mongoose.model('User', UserSchema);
-
-    var user;
-
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
-        return UserModel.esCreateMapping();
-      })
-      .then(function () {
-        UserModel = mongoose.model('User', UserSchema);
-        user = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}});
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-indexed', function (err) {
-            if (err) {
-              reject(err);
-            } else {
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 36,
+                city: { name: 'Paris' },
+              });
               resolve();
             }
-          });
-          user.save();
+          );
         });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}});
-            resolve();
-          });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          UserModel
-            .findById(user._id)
-            .then(function (dbUser) {
-              dbUser.age = 36;
-              expect(dbUser.city).to.be.undefined; // because of select false
-
-              dbUser.on('es-indexed', function (err) {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
-              });
-              dbUser.save();
-            });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 36, city: {name: 'Paris'}});
-            resolve();
-          });
-        });
-      })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should remove some fields', function (done) {
-
-    var JobSchema = new mongoose.Schema({
+  it('should remove some fields', () => {
+    const JobSchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var CitySchema = new mongoose.Schema({
+    const CitySchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var SkillSchema = new mongoose.Schema({
+    const SkillSchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
       city: {
         type: CitySchema,
-        select: false
+        select: false,
       },
       job: {
         type: JobSchema,
-        select: false
+        select: false,
       },
       skill: {
         type: SkillSchema,
-        select: false
-      }
+        select: false,
+      },
     });
 
-    UserSchema.plugin(plugin, {script: true});
+    UserSchema.plugin(plugin, { script: true });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    let UserModel = mongoose.model('User', UserSchema);
 
-    var user, witness;
+    let user;
+    let witness;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         UserModel = mongoose.model('User', UserSchema);
-        witness = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
+        witness = new UserModel({
+          name: 'John',
+          age: 35,
+          city: { name: 'Paris' },
+          job: { name: 'developer' },
+          skill: { name: 'math' },
+        });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          witness.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          witness.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -417,13 +452,19 @@ describe("document-hook", function () {
           witness.save();
         });
       })
-      .then(function () {
+      .then(() => {
         UserModel = mongoose.model('User', UserSchema);
-        user = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
+        user = new UserModel({
+          name: 'John',
+          age: 35,
+          city: { name: 'Paris' },
+          job: { name: 'developer' },
+          skill: { name: 'math' },
+        });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -433,122 +474,158 @@ describe("document-hook", function () {
           user.save();
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
-            resolve();
-          });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          UserModel
-            .findById(user._id, '+city +job +skill')
-            .then(function (dbUser) {
-              expect(dbUser.city).not.to.be.undefined; // because of select false
-              dbUser.city = undefined; // remove some fields
-              dbUser.job = undefined;
-              dbUser.age = 36;
-
-              dbUser.on('es-indexed', function (err) {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 35,
+                city: { name: 'Paris' },
+                job: { name: 'developer' },
+                skill: { name: 'math' },
               });
-              dbUser.save();
+              resolve();
+            }
+          );
+        });
+      })
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          UserModel.findById(user._id, '+city +job +skill').then(dbUser => {
+            expect(dbUser.city).not.to.be.undefined; // because of select false
+            dbUser.city = undefined; // remove some fields
+            dbUser.job = undefined;
+            dbUser.age = 36;
+
+            dbUser.on('es-indexed', err => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
             });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: witness._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(witness._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
-            resolve();
+            dbUser.save();
           });
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 36, skill: {name: 'math'}});
-            resolve();
-          });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: witness._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(witness._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 35,
+                city: { name: 'Paris' },
+                job: { name: 'developer' },
+                skill: { name: 'math' },
+              });
+              resolve();
+            }
+          );
         });
       })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 36,
+                skill: { name: 'math' },
+              });
+              resolve();
+            }
+          );
+        });
       });
   });
 
-  it('should nullify some fields', function (done) {
-
-    var JobSchema = new mongoose.Schema({
+  it('should nullify some fields', () => {
+    const JobSchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var CitySchema = new mongoose.Schema({
+    const CitySchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var SkillSchema = new mongoose.Schema({
+    const SkillSchema = new mongoose.Schema({
       _id: false,
-      name: String
+      name: String,
     });
 
-    var UserSchema = new mongoose.Schema({
+    const UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
       city: {
         type: CitySchema,
-        select: false
+        select: false,
       },
       job: {
         type: JobSchema,
-        select: false
+        select: false,
       },
       skill: {
         type: SkillSchema,
-        select: false
-      }
+        select: false,
+      },
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    let UserModel = mongoose.model('User', UserSchema);
 
-    var user, witness;
+    let user;
+    let witness;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         UserModel = mongoose.model('User', UserSchema);
-        witness = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
+        witness = new UserModel({
+          name: 'John',
+          age: 35,
+          city: { name: 'Paris' },
+          job: { name: 'developer' },
+          skill: { name: 'math' },
+        });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          witness.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          witness.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -558,13 +635,19 @@ describe("document-hook", function () {
           witness.save();
         });
       })
-      .then(function () {
+      .then(() => {
         UserModel = mongoose.model('User', UserSchema);
-        user = new UserModel({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
+        user = new UserModel({
+          name: 'John',
+          age: 35,
+          city: { name: 'Paris' },
+          job: { name: 'developer' },
+          skill: { name: 'math' },
+        });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          user.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          user.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -574,192 +657,238 @@ describe("document-hook", function () {
           user.save();
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
-            resolve();
-          });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          UserModel
-            .findById(user._id, '+city +job +skill')
-            .then(function (dbUser) {
-              expect(dbUser.city).not.to.be.undefined; // because of select false
-              dbUser.city = undefined; // remove some fields
-              dbUser.job = undefined;
-              dbUser.age = 36;
-
-              dbUser.on('es-indexed', function (err) {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 35,
+                city: { name: 'Paris' },
+                job: { name: 'developer' },
+                skill: { name: 'math' },
               });
-              dbUser.save();
+              resolve();
+            }
+          );
+        });
+      })
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          UserModel.findById(user._id, '+city +job +skill').then(dbUser => {
+            expect(dbUser.city).not.to.be.undefined; // because of select false
+            dbUser.city = undefined; // remove some fields
+            dbUser.job = undefined;
+            dbUser.age = 36;
+
+            dbUser.on('es-indexed', err => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
             });
-        });
-      })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: witness._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(witness._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 35, city: {name: 'Paris'}, job: {name: 'developer'}, skill: {name: 'math'}});
-            resolve();
+            dbUser.save();
           });
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 36, skill: {name: 'math'}, city: null, job: null});
-            resolve();
-          });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: witness._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(witness._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 35,
+                city: { name: 'Paris' },
+                job: { name: 'developer' },
+                skill: { name: 'math' },
+              });
+              resolve();
+            }
+          );
         });
       })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({
+                name: 'John',
+                age: 36,
+                skill: { name: 'math' },
+                city: null,
+                job: null,
+              });
+              resolve();
+            }
+          );
+        });
       });
   });
 
-  it('should handle FindOneAndUpdate', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should handle FindOneAndUpdate', () => {
+    let UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
     UserSchema.plugin(plugin);
 
-    var UserModel = mongoose.model('User', UserSchema);
+    let UserModel = mongoose.model('User', UserSchema);
 
-    var user;
+    let user;
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         return utils.deleteMongooseModels();
       })
-      .then(function () {
+      .then(() => {
         // recreate new model
         UserSchema = new mongoose.Schema({
           name: String,
-          age: Number
+          age: Number,
         });
         UserSchema.plugin(plugin);
         UserModel = mongoose.model('User', UserSchema);
-        user = new UserModel({name: 'John', age: 35});
+        user = new UserModel({ name: 'John', age: 35 });
         return user.save();
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         return utils.deleteMongooseModels();
       })
-      .then(function () {
+      .then(() => {
         // recreate new model
         UserSchema = new mongoose.Schema({
           name: String,
-          age: Number
+          age: Number,
         });
         UserSchema.plugin(plugin);
         UserModel = mongoose.model('User', UserSchema);
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
-          UserModel.on('es-indexed', function (err) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
+          UserModel.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
               resolve();
             }
           });
-          UserModel.findOneAndUpdate({_id: user._id}, {$set: {age: 67}}, {new: true}, function (err, usr) {
-            if (err || !usr) {
-              reject(err || new Error('no match'));
+          UserModel.findOneAndUpdate(
+            { _id: user._id },
+            { $set: { age: 67 } },
+            { new: true },
+            (err, usr) => {
+              if (err || !usr) {
+                reject(err || new Error('no match'));
+              }
             }
-          });
+          );
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.get({index: options.index, type: options.type, id: user._id.toString()}, function (err, resp) {
-            expect(resp.found).to.eql(true);
-            expect(resp._id).to.eql(user._id.toString());
-            expect(resp._source).to.eql({name: 'John', age: 67});
-            resolve();
-          });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.get(
+            {
+              index: options.index,
+              type: options.type,
+              id: user._id.toString(),
+            },
+            (err, resp) => {
+              expect(resp.found).to.eql(true);
+              expect(resp._id).to.eql(user._id.toString());
+              expect(resp._source).to.eql({ name: 'John', age: 67 });
+              resolve();
+            }
+          );
         });
-      })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
 
-  it('should save a previously filtered entry', function (done) {
-
-    var UserSchema = new mongoose.Schema({
+  it('should save a previously filtered entry', () => {
+    const UserSchema = new mongoose.Schema({
       name: String,
-      age: Number
+      age: Number,
     });
 
-    UserSchema.plugin(plugin, {filter: function (doc) {
-      return doc.age < 80;
-    }});
+    UserSchema.plugin(plugin, {
+      filter(doc) {
+        return doc.age < 80;
+      },
+    });
 
-    var UserModel = mongoose.model('User', UserSchema);
+    const UserModel = mongoose.model('User', UserSchema);
 
-    var henry = new UserModel({name: 'Henry', age: 85});
+    const henry = new UserModel({ name: 'Henry', age: 85 });
 
-    utils.deleteModelIndexes(UserModel)
-      .then(function () {
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
         return UserModel.esCreateMapping();
       })
-      .then(function () {
+      .then(() => {
         return henry.save();
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esRefresh();
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.search({index: options.index, type: options.type, body: {query: {match_all: {}}}}, function (err, resp) {
-            expect(resp.hits.total).to.eql(0);
-            resolve();
-          });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.search(
+            {
+              index: options.index,
+              type: options.type,
+              body: { query: { match_all: {} } },
+            },
+            (err, resp) => {
+              expect(resp.hits.total).to.eql(0);
+              resolve();
+            }
+          );
         });
       })
-      .then(function () {
-        return new utils.Promise(function (resolve, reject) {
+      .then(() => {
+        return new utils.Promise((resolve, reject) => {
           henry.age = 35;
-          henry.on('es-indexed', function (err) {
+          henry.on('es-indexed', err => {
             if (err) {
               reject(err);
             } else {
@@ -769,28 +898,28 @@ describe("document-hook", function () {
           henry.save();
         });
       })
-      .then(function () {
+      .then(() => {
         return UserModel.esRefresh();
       })
-      .then(function () {
-        return new utils.Promise(function (resolve) {
-          var options = UserModel.esOptions();
-          var client = options.client;
-          client.search({index: options.index, type: options.type, body: {query: {match_all: {}}}}, function (err, resp) {
-            expect(resp.hits.total).to.eql(1);
-            var hit = resp.hits.hits[0];
-            expect(hit._id).to.eql(henry._id.toString());
-            expect(hit._source).to.eql({name: 'Henry', age: 35});
-            resolve();
-          });
+      .then(() => {
+        return new utils.Promise(resolve => {
+          const options = UserModel.esOptions();
+          const client = options.client;
+          client.search(
+            {
+              index: options.index,
+              type: options.type,
+              body: { query: { match_all: {} } },
+            },
+            (err, resp) => {
+              expect(resp.hits.total).to.eql(1);
+              const hit = resp.hits.hits[0];
+              expect(hit._id).to.eql(henry._id.toString());
+              expect(hit._source).to.eql({ name: 'Henry', age: 35 });
+              resolve();
+            }
+          );
         });
-      })
-      .then(function () {
-        done();
-      })
-      .catch(function (err) {
-        done(err);
       });
   });
-
 });
