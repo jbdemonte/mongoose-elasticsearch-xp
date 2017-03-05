@@ -19,16 +19,18 @@
     "index.js",
     "lib"
   ],
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
+    "lint": "./node_modules/.bin/eslint lib test *.js",
     "docker-v2": "node ./scripts/docker/start 2 & wait",
-    "docker-v5": "node ./scripts/docker/start 5 & wait",
     "test-v2": "./node_modules/mocha/bin/mocha -t 10000 test/es2/*",
-    "test-v2-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
+    "test-v2-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
     "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es2/*",
+    "docker-v5": "node ./scripts/docker/start 5 & wait",
     "test-v5": "./node_modules/mocha/bin/mocha -t 10000 test/es5/*",
-    "test-v5-covered": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
-    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*"
+    "test-v5-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
+    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*",
+    "watch": "npm run test-v5 -- --watch"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
