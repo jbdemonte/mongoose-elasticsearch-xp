@@ -687,7 +687,7 @@ User
 [npm-image]: https://badge.fury.io/js/mongoose-elasticsearch-xp.svg
 
 [travis-url]: http://travis-ci.org/jbdemonte/mongoose-elasticsearch-xp
-[travis-image]: https://secure.travis-ci.org/jbdemonte/mongoose-elasticsearch-xp.png?branch=master
+[travis-image]: https://secure.travis-ci.org/jbdemonte/mongoose-elasticsearch-xp.svg?branch=master
 
 [coverage-url]: https://coveralls.io/github/jbdemonte/mongoose-elasticsearch-xp?branch=master
 [coverage-image]: https://coveralls.io/repos/github/jbdemonte/mongoose-elasticsearch-xp/badge.svg?branch=master
