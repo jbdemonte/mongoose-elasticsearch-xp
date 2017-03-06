@@ -36,4 +36,5 @@ script:
   - if [ "$ES" -eq "5" ]; then echo "RUNNING V5"; npm run-script test-v5-covered ; fi
 
 
-after_success: cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
+after_success:
+  - if [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js; fi
