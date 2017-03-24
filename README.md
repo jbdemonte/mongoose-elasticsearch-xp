@@ -339,7 +339,7 @@ Book
 
 ### Filtered Indexing
 
-You can specify a filter function to index a model to Elasticsearch based on some specific conditions.
+You can specify a filter function to index a model to Elasticsearch based on some specific conditions. If document satisfies conditions it will be added to the elastic index. If not, it will be removed from index.
 
 Filtering function must return True for conditions that will be indexing to Elasticsearch (like Array.filter & unlike moogoosastic.filter)
 
