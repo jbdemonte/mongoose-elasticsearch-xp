@@ -86,6 +86,10 @@ Options are:
 * `mappingSettings` - default settings to use with `esCreateMapping`.
 * `refreshDelay` - time in ms to wait after `esRefresh`. Defaults to 0.
 * `script` - whether or not the inline script are enabled in elasticsearch. Defaults to false.
+* `bulk` - options to use when synchronising.
+* `bulk.batch` - [batchSize](https://docs.mongodb.com/manual/reference/method/cursor.batchSize/) to use on synchronise options. Defaults to 50.
+* `bulk.size` - bulk element count to wait before calling `client.bulk` function. Defaults to 1000.
+* `bulk.delay` - idle time to wait before calling the `client.bulk` function. Defaults to 1000.
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
