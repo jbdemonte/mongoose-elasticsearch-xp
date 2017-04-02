@@ -217,7 +217,7 @@ doc.save(function (err) {
 ```
 
 
-###Indexing Nested Models
+### Indexing Nested Models
 In order to index nested models you can refer following example.
 
 ```javascript
@@ -240,7 +240,7 @@ var User = mongoose.model('User', UserSchema);
 ```
 
 
-###Indexing Populated Models
+### Indexing Populated Models
 To index populated models (`ref` model), it is mandatory to provide a schema to explain what to index in the `es_type` key.
 **This plugin will never populate** models by its own, **you have to populate** the models.
 
