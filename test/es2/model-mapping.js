@@ -652,6 +652,110 @@ describe('model-mapping', () => {
       });
   });
 
+  it('should handle es_type as array of "schema"', () => {
+    let user;
+    let book1;
+    let book2;
+
+    const BookSchema = new mongoose.Schema({
+      name: String,
+    });
+
+    const UserSchema = new mongoose.Schema({
+      first: String,
+      last: String,
+      books: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Book',
+          es_type: {
+            _id: {
+              es_type: 'string',
+            },
+            name: {
+              es_type: 'string',
+            },
+          },
+        },
+      ],
+    });
+
+    UserSchema.plugin(plugin);
+
+    const BookModel = mongoose.model('Book', BookSchema);
+    const UserModel = mongoose.model('User', UserSchema);
+
+    return utils
+      .deleteModelIndexes(UserModel)
+      .then(() => {
+        return UserModel.esCreateMapping();
+      })
+      .then(() => {
+        const options = UserModel.esOptions();
+        return options.client.indices.getMapping({
+          index: options.index,
+          type: options.type,
+        });
+      })
+      .then(mapping => {
+        const properties = mapping.users.mappings.user.properties;
+        expect(properties).to.have.all.keys('first', 'last', 'books');
+        expect(properties.first.type).to.be.equal('string');
+        expect(properties.last.type).to.be.equal('string');
+        expect(properties.books.properties).to.have.all.keys('_id', 'name');
+        expect(properties.books.properties._id.type).to.be.equal('string');
+        expect(properties.books.properties.name.type).to.be.equal('string');
+      })
+      .then(() => {
+        return new utils.Promise(resolve => {
+          book1 = new BookModel({
+            name: 'The Jungle Book',
+          });
+
+          book2 = new BookModel({
+            name: '1984',
+          });
+
+          user = new UserModel({
+            first: 'Maurice',
+            last: 'Moss',
+            books: [book1, book2],
+          });
+
+          user.on('es-indexed', () => {
+            resolve();
+          });
+
+          user.save();
+        });
+      })
+      .then(() => {
+        return UserModel.esRefresh();
+      })
+      .then(() => {
+        return UserModel.esSearch({
+          query: { query_string: { query: 'Jungle' } },
+        });
+      })
+      .then(result => {
+        expect(result.hits.total).to.eql(1);
+        expect(result.hits.hits[0]._source).to.eql({
+          first: 'Maurice',
+          last: 'Moss',
+          books: [
+            {
+              _id: book1._id.toString(),
+              name: 'The Jungle Book',
+            },
+            {
+              _id: book2._id.toString(),
+              name: '1984',
+            },
+          ],
+        });
+      });
+  });
+
   it('should not be blocked by a non populated "es_type schema"', () => {
     let user;
     let city;
