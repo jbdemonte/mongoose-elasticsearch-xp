@@ -8,32 +8,87 @@ describe('hydratation', () => {
   utils.setup();
 
   let UserModel;
+  let BookModel;
+  let CityModel;
   let john;
   let jane;
   let bob;
+  let city1;
+  let city2;
+  let book1;
+  let book2;
+  let author1;
+  let author2;
 
   beforeEach(() => {
-    const UserSchema = new mongoose.Schema({
+    const CitySchema = new mongoose.Schema({
       name: String,
-      age: Number,
+    });
+
+    const BookSchema = new mongoose.Schema({
+      title: String,
+      author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    });
+
+    const UserSchema = new mongoose.Schema({
+      name: { type: String, es_indexed: true },
+      age: { type: Number, es_indexed: true },
+      city: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'City',
+        es_indexed: false,
+      },
+      books: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
+        es_indexed: false,
+      },
     });
 
     UserSchema.plugin(plugin);
 
     UserModel = mongoose.model('User', UserSchema);
+    BookModel = mongoose.model('Book', BookSchema);
+    CityModel = mongoose.model('City', CitySchema);
 
-    john = new UserModel({ name: 'John', age: 35 });
-    jane = new UserModel({ name: 'Jane', age: 34 });
-    bob = new UserModel({ name: 'Bob', age: 36 });
+    city1 = new CityModel({ name: 'New York' });
+    city2 = new CityModel({ name: 'Los Angeles' });
+
+    author1 = new UserModel({ name: 'Rudyard Kipling' });
+    author2 = new UserModel({ name: 'George Orwell' });
+
+    book1 = new BookModel({ title: 'The Jungle Book', author: author1 });
+    book2 = new BookModel({ title: '1984', author: author2 });
+
+    john = new UserModel({
+      name: 'John',
+      age: 35,
+      city: city1,
+      books: [book1, book2],
+    });
+    jane = new UserModel({
+      name: 'Jane',
+      age: 34,
+      city: city1,
+      books: [book1],
+    });
+    bob = new UserModel({ name: 'Bob', age: 36, city: city2, books: [book2] });
 
     return utils
       .deleteModelIndexes(UserModel)
+      .then(() => {
+        return Promise.all([
+          city1.save(),
+          city2.save(),
+          book1.save(),
+          book2.save(),
+        ]);
+      })
       .then(() => {
         return UserModel.esCreateMapping();
       })
       .then(() => {
         return utils.Promise.all(
-          [john, jane, bob].map(user => {
+          [john, jane, bob, author1, author2].map(user => {
             return new utils.Promise(resolve => {
               user.on('es-indexed', resolve);
               user.save();
@@ -294,4 +349,114 @@ describe('hydratation', () => {
       expect(hit._source.age).to.eql(34);
     });
   });
+
+  it('should hydrate with a simple populate', () => {
+    return UserModel.esSearch(
+        {
+          query: { match_all: {} },
+          sort: [{ age: { order: 'desc' } }],
+          filter: { range: { age: { gte: 35 } } },
+        },
+        {
+          hydrate: {
+            populate: {
+              path: 'city',
+            },
+          },
+        }
+      )
+      .then(result => {
+        let hit;
+        expect(result.hits.total).to.eql(2);
+
+        hit = result.hits.hits[0];
+
+        expect(hit._source).to.be.undefined;
+        expect(hit.doc).to.be.an.instanceof(UserModel);
+        expect(hit.doc._id.toString()).to.eql(bob._id.toString());
+        expect(hit.doc.name).to.eql(bob.name);
+        expect(hit.doc.age).to.eql(bob.age);
+        expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
+        expect(hit.doc.city.name).to.eql(city2.name);
+        // book should not be populated
+        expect(hit.doc.books.length).to.eql(1);
+        expect(hit.doc.books[0].toJSON()).to.eql(book2._id.toString());
+
+        hit = result.hits.hits[1];
+        expect(hit._source).to.be.undefined;
+        expect(hit.doc).to.be.an.instanceof(UserModel);
+        expect(hit.doc._id.toString()).to.eql(john._id.toString());
+        expect(hit.doc.name).to.eql(john.name);
+        expect(hit.doc.age).to.eql(john.age);
+        expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
+        expect(hit.doc.city.name).to.eql(city1.name);
+        // book should not be populated
+        expect(hit.doc.books.length).to.eql(2);
+        expect(hit.doc.books[0].toJSON()).to.eql(book1._id.toString());
+        expect(hit.doc.books[1].toJSON()).to.eql(book2._id.toString());
+      });
+  });
+
+  it(
+    'should hydrate with an array of population including a complex one',
+    () => {
+      return UserModel.esSearch(
+          {
+            query: { match_all: {} },
+            sort: [{ age: { order: 'desc' } }],
+            filter: { range: { age: { gte: 35 } } },
+          },
+          {
+            hydrate: {
+              populate: [
+                {
+                  path: 'city',
+                },
+                {
+                  path: 'books',
+                  populate: {
+                    path: 'author',
+                  },
+                },
+              ],
+            },
+          }
+        )
+        .then(result => {
+          let hit;
+          expect(result.hits.total).to.eql(2);
+
+          hit = result.hits.hits[0];
+
+          expect(hit._source).to.be.undefined;
+          expect(hit.doc).to.be.an.instanceof(UserModel);
+          expect(hit.doc._id.toString()).to.eql(bob._id.toString());
+          expect(hit.doc.name).to.eql(bob.name);
+          expect(hit.doc.age).to.eql(bob.age);
+
+          expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
+          expect(hit.doc.city.name).to.eql(city2.name);
+
+          expect(hit.doc.books.length).to.eql(1);
+          expect(hit.doc.books[0].toJSON()).to.eql(book2.toJSON());
+          expect(hit.doc.books[0].author.toJSON()).to.eql(author2.toJSON());
+
+          hit = result.hits.hits[1];
+          expect(hit._source).to.be.undefined;
+          expect(hit.doc).to.be.an.instanceof(UserModel);
+          expect(hit.doc._id.toString()).to.eql(john._id.toString());
+          expect(hit.doc.name).to.eql(john.name);
+          expect(hit.doc.age).to.eql(john.age);
+
+          expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
+          expect(hit.doc.city.name).to.eql(city1.name);
+
+          expect(hit.doc.books.length).to.eql(2);
+          expect(hit.doc.books[0].toJSON()).to.eql(book1.toJSON());
+          expect(hit.doc.books[0].author.toJSON()).to.eql(author1.toJSON());
+          expect(hit.doc.books[1].toJSON()).to.eql(book2.toJSON());
+          expect(hit.doc.books[1].author.toJSON()).to.eql(author2.toJSON());
+        });
+    }
+  );
 });

@@ -23,6 +23,7 @@ This plugin is compatible with Elasticsearch version 2 and 5.
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Queries](#queries)
   - [Hydration](#hydration)
+    - [Hydration with population](#hydration-with-population)
   - [Getting only Ids](#getting-only-ids)
 - [Count](#count)
   - [Getting only count value](#getting-only-count-value)
@@ -612,6 +613,56 @@ User
     // users is an array of User
   });
 ```
+
+#### Hydration with population
+
+To populate hydrated models, simply use the `populate` key of the `hydrate` object.
+
+Use it the same way mongoose populate works (string, object, array of object).
+
+```javascript
+User
+  .esSearch(
+    {query_string: {query: "john"}},
+    {hydrate: {
+      populate: {
+        path: 'city',
+        select: 'name'
+      }
+    }}
+  )
+  .then(function (results) {
+    // results here
+  });
+```
+
+When having different populate to handle, you can use an array of populate.
+In the example below, two main key are populated `city` and `books`. The sub-key `book.author` is also populated ([mongoose feature](http://mongoosejs.com/docs/populate.html#deep-populate)).
+
+```javascript
+User
+  .esSearch(
+    {query_string: {query: "john"}},
+    {hydrate: {
+      populate: [
+        {
+          path: 'city'
+        },
+        {
+          path: 'books',
+          populate: {
+            path: 'author',
+            select: 'name'
+          }
+        }
+      ]
+    }}
+  )
+  .then(function (results) {
+    // results here
+  });
+```
+
 
 ### Getting only Ids
 A variant to hydration may be to get only ids instead of the complete Elasticsearch result. 
