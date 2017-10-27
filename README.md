@@ -301,7 +301,7 @@ var User = mongoose.model('User', UserSchema);
 
 ### Indexing An Existing Collection
 Already have a mongodb collection that you'd like to index using this plugin? 
-No problem! Simply call the `esSynchronise` method on your model to open a mongoose stream and start indexing documents individually.
+No problem! Simply call the `esSynchronize` method on your model to open a mongoose stream and start indexing documents individually.
 
 ```javascript
 var BookSchema = new mongoose.Schema({
