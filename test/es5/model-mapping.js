@@ -439,56 +439,54 @@ describe('model-mapping', () => {
       })
       .then(() => {
         return GroupModel.esSearch({
-            query: {
-              nested: {
-                path: 'user',
-                query: {
-                  bool: {
-                    must: [
-                      { match: { 'user.first': 'Alice' } },
-                      { match: { 'user.last': 'Smith' } },
-                    ],
-                  },
+          query: {
+            nested: {
+              path: 'user',
+              query: {
+                bool: {
+                  must: [
+                    { match: { 'user.first': 'Alice' } },
+                    { match: { 'user.last': 'Smith' } },
+                  ],
                 },
               },
             },
-          })
-          .then(result => {
-            expect(result.hits.total).to.eql(0);
-          });
+          },
+        }).then(result => {
+          expect(result.hits.total).to.eql(0);
+        });
       })
       .then(() => {
         return GroupModel.esSearch({
-            query: {
-              nested: {
-                path: 'user',
-                query: {
-                  bool: {
-                    must: [
-                      { match: { 'user.first': 'Alice' } },
-                      { match: { 'user.last': 'White' } },
-                    ],
-                  },
+          query: {
+            nested: {
+              path: 'user',
+              query: {
+                bool: {
+                  must: [
+                    { match: { 'user.first': 'Alice' } },
+                    { match: { 'user.last': 'White' } },
+                  ],
                 },
               },
             },
-          })
-          .then(result => {
-            expect(result.hits.total).to.eql(1);
-            expect(result.hits.hits[0]._source).to.eql({
-              group: 'fans',
-              user: [
-                {
-                  first: 'John',
-                  last: 'Smith',
-                },
-                {
-                  first: 'Alice',
-                  last: 'White',
-                },
-              ],
-            });
+          },
+        }).then(result => {
+          expect(result.hits.total).to.eql(1);
+          expect(result.hits.hits[0]._source).to.eql({
+            group: 'fans',
+            user: [
+              {
+                first: 'John',
+                last: 'Smith',
+              },
+              {
+                first: 'Alice',
+                last: 'White',
+              },
+            ],
           });
+        });
       });
   });
 
@@ -591,7 +589,8 @@ describe('model-mapping', () => {
           properties.company.properties.city.properties.tags.properties
         ).to.have.all.keys('value');
         expect(
-          properties.company.properties.city.properties.tags.properties.value.type
+          properties.company.properties.city.properties.tags.properties.value
+            .type
         ).to.be.equal('text');
       })
       .then(() => {

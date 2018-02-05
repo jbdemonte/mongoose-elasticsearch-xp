@@ -163,13 +163,10 @@ describe('document-hook', () => {
             }
             count++;
             if (count === 3) {
-              setTimeout(
-                () => {
-                  // delay to check if more than 3 are received
-                  resolve();
-                },
-                500
-              );
+              setTimeout(() => {
+                // delay to check if more than 3 are received
+                resolve();
+              }, 500);
             } else if (count > 3) {
               reject(new Error('more than 3 event were emitted'));
             }
@@ -189,13 +186,10 @@ describe('document-hook', () => {
             }
             count++;
             if (count === 3) {
-              setTimeout(
-                () => {
-                  // delay to check if more than 3 are received
-                  resolve();
-                },
-                500
-              );
+              setTimeout(() => {
+                // delay to check if more than 3 are received
+                resolve();
+              }, 500);
             } else if (count > 3) {
               reject(new Error('more than 3 event were emitted'));
             }

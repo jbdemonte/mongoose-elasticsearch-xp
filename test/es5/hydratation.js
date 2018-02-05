@@ -103,112 +103,109 @@ describe('hydratation', () => {
 
   it('should hydrate', () => {
     return UserModel.esSearch(
-        {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: { range: { age: { gte: 35 } } },
-            },
+      {
+        query: {
+          bool: {
+            must: { match_all: {} },
+            filter: { range: { age: { gte: 35 } } },
           },
-          sort: [{ age: { order: 'desc' } }],
         },
-        { hydrate: true }
-      )
-      .then(result => {
-        let hit;
-        expect(result.hits.total).to.eql(2);
+        sort: [{ age: { order: 'desc' } }],
+      },
+      { hydrate: true }
+    ).then(result => {
+      let hit;
+      expect(result.hits.total).to.eql(2);
 
-        hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(bob._id.toString());
-        expect(hit.doc.name).to.eql(bob.name);
-        expect(hit.doc.age).to.eql(bob.age);
+      hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(bob._id.toString());
+      expect(hit.doc.name).to.eql(bob.name);
+      expect(hit.doc.age).to.eql(bob.age);
 
-        hit = result.hits.hits[1];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(john._id.toString());
-        expect(hit.doc.name).to.eql(john.name);
-        expect(hit.doc.age).to.eql(john.age);
-      });
+      hit = result.hits.hits[1];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(john._id.toString());
+      expect(hit.doc.name).to.eql(john.name);
+      expect(hit.doc.age).to.eql(john.age);
+    });
   });
 
   it('should hydrate returning only models', () => {
     return UserModel.esSearch(
-        {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: { range: { age: { gte: 35 } } },
-            },
+      {
+        query: {
+          bool: {
+            must: { match_all: {} },
+            filter: { range: { age: { gte: 35 } } },
           },
-          sort: [{ age: { order: 'desc' } }],
         },
-        { hydrate: { docsOnly: true } }
-      )
-      .then(users => {
-        let user;
-        expect(users.length).to.eql(2);
+        sort: [{ age: { order: 'desc' } }],
+      },
+      { hydrate: { docsOnly: true } }
+    ).then(users => {
+      let user;
+      expect(users.length).to.eql(2);
 
-        user = users[0];
-        expect(user._id.toString()).to.eql(bob._id.toString());
-        expect(user.name).to.eql(bob.name);
-        expect(user.age).to.eql(bob.age);
+      user = users[0];
+      expect(user._id.toString()).to.eql(bob._id.toString());
+      expect(user.name).to.eql(bob.name);
+      expect(user.age).to.eql(bob.age);
 
-        user = users[1];
-        expect(user._id.toString()).to.eql(john._id.toString());
-        expect(user.name).to.eql(john.name);
-        expect(user.age).to.eql(john.age);
-      });
+      user = users[1];
+      expect(user._id.toString()).to.eql(john._id.toString());
+      expect(user.name).to.eql(john.name);
+      expect(user.age).to.eql(john.age);
+    });
   });
 
   it('should return an empty array when hydrating only models on 0 hit', () => {
     return UserModel.esSearch(
-        {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: { range: { age: { gte: 100 } } },
-            },
+      {
+        query: {
+          bool: {
+            must: { match_all: {} },
+            filter: { range: { age: { gte: 100 } } },
           },
-          sort: [{ age: { order: 'desc' } }],
         },
-        { hydrate: { docsOnly: true } }
-      )
-      .then(users => {
-        expect(users).to.eql([]);
-      });
+        sort: [{ age: { order: 'desc' } }],
+      },
+      { hydrate: { docsOnly: true } }
+    ).then(users => {
+      expect(users).to.eql([]);
+    });
   });
 
   it('should hydrate using projection', () => {
-    return UserModel.esSearch('name:jane', { hydrate: { select: 'name' } })
-      .then(result => {
-        expect(result.hits.total).to.eql(1);
+    return UserModel.esSearch('name:jane', {
+      hydrate: { select: 'name' },
+    }).then(result => {
+      expect(result.hits.total).to.eql(1);
 
-        const hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.be.undefined;
-      });
+      const hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.be.undefined;
+    });
   });
 
   it('should hydrate using options', () => {
     return UserModel.esSearch('name:jane', {
-        hydrate: { options: { lean: true } },
-      })
-      .then(result => {
-        expect(result.hits.total).to.eql(1);
+      hydrate: { options: { lean: true } },
+    }).then(result => {
+      expect(result.hits.total).to.eql(1);
 
-        const hit = result.hits.hits[0];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).not.to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(jane._id.toString());
-        expect(hit.doc.name).to.eql(jane.name);
-        expect(hit.doc.age).to.eql(jane.age);
-      });
+      const hit = result.hits.hits[0];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).not.to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(jane._id.toString());
+      expect(hit.doc.name).to.eql(jane.name);
+      expect(hit.doc.age).to.eql(jane.age);
+    });
   });
 
   it('should hydrate when defined in plugin', () => {
@@ -248,28 +245,27 @@ describe('hydratation', () => {
     const UserModelHydrate = mongoose.model('User', UserSchema);
 
     return UserModelHydrate.esSearch({
-        query: {
-          bool: {
-            must: { match_all: {} },
-            filter: { range: { age: { gte: 35 } } },
-          },
+      query: {
+        bool: {
+          must: { match_all: {} },
+          filter: { range: { age: { gte: 35 } } },
         },
-        sort: [{ age: { order: 'desc' } }],
-      })
-      .then(users => {
-        let user;
-        expect(users.length).to.eql(2);
+      },
+      sort: [{ age: { order: 'desc' } }],
+    }).then(users => {
+      let user;
+      expect(users.length).to.eql(2);
 
-        user = users[0];
-        expect(user._id.toString()).to.eql(bob._id.toString());
-        expect(user.name).to.eql(bob.name);
-        expect(user.age).to.eql(bob.age);
+      user = users[0];
+      expect(user._id.toString()).to.eql(bob._id.toString());
+      expect(user.name).to.eql(bob.name);
+      expect(user.age).to.eql(bob.age);
 
-        user = users[1];
-        expect(user._id.toString()).to.eql(john._id.toString());
-        expect(user.name).to.eql(john.name);
-        expect(user.age).to.eql(john.age);
-      });
+      user = users[1];
+      expect(user._id.toString()).to.eql(john._id.toString());
+      expect(user.name).to.eql(john.name);
+      expect(user.age).to.eql(john.age);
+    });
   });
 
   it('should hydrate when defined in plugin using projection', () => {
@@ -375,119 +371,114 @@ describe('hydratation', () => {
 
   it('should hydrate with a simple populate', () => {
     return UserModel.esSearch(
-        {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: { range: { age: { gte: 35 } } },
-            },
+      {
+        query: {
+          bool: {
+            must: { match_all: {} },
+            filter: { range: { age: { gte: 35 } } },
           },
-          sort: [{ age: { order: 'desc' } }],
         },
-        {
-          hydrate: {
-            populate: {
-              path: 'city',
-            },
+        sort: [{ age: { order: 'desc' } }],
+      },
+      {
+        hydrate: {
+          populate: {
+            path: 'city',
           },
-        }
-      )
-      .then(result => {
-        let hit;
-        expect(result.hits.total).to.eql(2);
+        },
+      }
+    ).then(result => {
+      let hit;
+      expect(result.hits.total).to.eql(2);
 
-        hit = result.hits.hits[0];
+      hit = result.hits.hits[0];
 
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(bob._id.toString());
-        expect(hit.doc.name).to.eql(bob.name);
-        expect(hit.doc.age).to.eql(bob.age);
-        expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
-        expect(hit.doc.city.name).to.eql(city2.name);
-        // book should not be populated
-        expect(hit.doc.books.length).to.eql(1);
-        expect(hit.doc.books[0].toJSON()).to.eql(book2._id.toString());
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(bob._id.toString());
+      expect(hit.doc.name).to.eql(bob.name);
+      expect(hit.doc.age).to.eql(bob.age);
+      expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
+      expect(hit.doc.city.name).to.eql(city2.name);
+      // book should not be populated
+      expect(hit.doc.books.length).to.eql(1);
+      expect(hit.doc.books[0].toJSON()).to.eql(book2._id.toString());
 
-        hit = result.hits.hits[1];
-        expect(hit._source).to.be.undefined;
-        expect(hit.doc).to.be.an.instanceof(UserModel);
-        expect(hit.doc._id.toString()).to.eql(john._id.toString());
-        expect(hit.doc.name).to.eql(john.name);
-        expect(hit.doc.age).to.eql(john.age);
-        expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
-        expect(hit.doc.city.name).to.eql(city1.name);
-        // book should not be populated
-        expect(hit.doc.books.length).to.eql(2);
-        expect(hit.doc.books[0].toJSON()).to.eql(book1._id.toString());
-        expect(hit.doc.books[1].toJSON()).to.eql(book2._id.toString());
-      });
+      hit = result.hits.hits[1];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(john._id.toString());
+      expect(hit.doc.name).to.eql(john.name);
+      expect(hit.doc.age).to.eql(john.age);
+      expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
+      expect(hit.doc.city.name).to.eql(city1.name);
+      // book should not be populated
+      expect(hit.doc.books.length).to.eql(2);
+      expect(hit.doc.books[0].toJSON()).to.eql(book1._id.toString());
+      expect(hit.doc.books[1].toJSON()).to.eql(book2._id.toString());
+    });
   });
 
-  it(
-    'should hydrate with an array of population including a complex one',
-    () => {
-      return UserModel.esSearch(
-          {
-            query: {
-              bool: {
-                must: { match_all: {} },
-                filter: { range: { age: { gte: 35 } } },
+  it('should hydrate with an array of population including a complex one', () => {
+    return UserModel.esSearch(
+      {
+        query: {
+          bool: {
+            must: { match_all: {} },
+            filter: { range: { age: { gte: 35 } } },
+          },
+        },
+        sort: [{ age: { order: 'desc' } }],
+      },
+      {
+        hydrate: {
+          populate: [
+            {
+              path: 'city',
+            },
+            {
+              path: 'books',
+              populate: {
+                path: 'author',
               },
             },
-            sort: [{ age: { order: 'desc' } }],
-          },
-          {
-            hydrate: {
-              populate: [
-                {
-                  path: 'city',
-                },
-                {
-                  path: 'books',
-                  populate: {
-                    path: 'author',
-                  },
-                },
-              ],
-            },
-          }
-        )
-        .then(result => {
-          let hit;
-          expect(result.hits.total).to.eql(2);
+          ],
+        },
+      }
+    ).then(result => {
+      let hit;
+      expect(result.hits.total).to.eql(2);
 
-          hit = result.hits.hits[0];
+      hit = result.hits.hits[0];
 
-          expect(hit._source).to.be.undefined;
-          expect(hit.doc).to.be.an.instanceof(UserModel);
-          expect(hit.doc._id.toString()).to.eql(bob._id.toString());
-          expect(hit.doc.name).to.eql(bob.name);
-          expect(hit.doc.age).to.eql(bob.age);
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(bob._id.toString());
+      expect(hit.doc.name).to.eql(bob.name);
+      expect(hit.doc.age).to.eql(bob.age);
 
-          expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
-          expect(hit.doc.city.name).to.eql(city2.name);
+      expect(hit.doc.city._id.toString()).to.eql(city2._id.toString());
+      expect(hit.doc.city.name).to.eql(city2.name);
 
-          expect(hit.doc.books.length).to.eql(1);
-          expect(hit.doc.books[0].toJSON()).to.eql(book2.toJSON());
-          expect(hit.doc.books[0].author.toJSON()).to.eql(author2.toJSON());
+      expect(hit.doc.books.length).to.eql(1);
+      expect(hit.doc.books[0].toJSON()).to.eql(book2.toJSON());
+      expect(hit.doc.books[0].author.toJSON()).to.eql(author2.toJSON());
 
-          hit = result.hits.hits[1];
-          expect(hit._source).to.be.undefined;
-          expect(hit.doc).to.be.an.instanceof(UserModel);
-          expect(hit.doc._id.toString()).to.eql(john._id.toString());
-          expect(hit.doc.name).to.eql(john.name);
-          expect(hit.doc.age).to.eql(john.age);
+      hit = result.hits.hits[1];
+      expect(hit._source).to.be.undefined;
+      expect(hit.doc).to.be.an.instanceof(UserModel);
+      expect(hit.doc._id.toString()).to.eql(john._id.toString());
+      expect(hit.doc.name).to.eql(john.name);
+      expect(hit.doc.age).to.eql(john.age);
 
-          expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
-          expect(hit.doc.city.name).to.eql(city1.name);
+      expect(hit.doc.city._id.toString()).to.eql(city1._id.toString());
+      expect(hit.doc.city.name).to.eql(city1.name);
 
-          expect(hit.doc.books.length).to.eql(2);
-          expect(hit.doc.books[0].toJSON()).to.eql(book1.toJSON());
-          expect(hit.doc.books[0].author.toJSON()).to.eql(author1.toJSON());
-          expect(hit.doc.books[1].toJSON()).to.eql(book2.toJSON());
-          expect(hit.doc.books[1].author.toJSON()).to.eql(author2.toJSON());
-        });
-    }
-  );
+      expect(hit.doc.books.length).to.eql(2);
+      expect(hit.doc.books[0].toJSON()).to.eql(book1.toJSON());
+      expect(hit.doc.books[0].author.toJSON()).to.eql(author1.toJSON());
+      expect(hit.doc.books[1].toJSON()).to.eql(book2.toJSON());
+      expect(hit.doc.books[1].author.toJSON()).to.eql(author2.toJSON());
+    });
+  });
 });
