@@ -1,9 +1,8 @@
 'use strict';
 
-const _Promise = require('bluebird');
 const mongoose = require('mongoose');
 
-mongoose.Promise = _Promise;
+mongoose.Promise = Promise;
 
 function array(mixed) {
   return Array.isArray(mixed) ? mixed : [mixed];
@@ -33,21 +32,19 @@ function setup() {
 }
 
 function deleteModelIndexes(models) {
-  return _Promise
-    .all(
-      array(models).map(model => {
-        return new _Promise(resolve => {
-          const options = model.esOptions();
-          const client = options.client;
-          client.indices.delete({ index: options.index }, () => {
-            resolve();
-          });
+  return Promise.all(
+    array(models).map(model => {
+      return new Promise(resolve => {
+        const options = model.esOptions();
+        const client = options.client;
+        client.indices.delete({ index: options.index }, () => {
+          resolve();
         });
-      })
-    )
-    .then(() => {
-      // do nothing, just remove the results to allows to use .then(done)
-    });
+      });
+    })
+  ).then(() => {
+    // do nothing, just remove the results to allows to use .then(done)
+  });
 }
 
 function deleteMongooseModels() {
@@ -58,7 +55,7 @@ function deleteMongooseModels() {
 }
 
 module.exports = {
-  Promise: _Promise,
+  Promise,
   setup,
   deleteModelIndexes,
   deleteMongooseModels,
