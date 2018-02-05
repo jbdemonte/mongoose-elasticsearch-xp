@@ -81,14 +81,13 @@ describe('esCount', () => {
 
   it('should handle a full query', () => {
     return UserModel.esCount({
-        bool: {
-          must: { match_all: {} },
-          filter: { range: { age: { lt: 35 } } },
-        },
-      })
-      .then(result => {
-        expect(result.count).to.eql(1);
-      });
+      bool: {
+        must: { match_all: {} },
+        filter: { range: { age: { lt: 35 } } },
+      },
+    }).then(result => {
+      expect(result.count).to.eql(1);
+    });
   });
 
   it('should handle a short query', () => {

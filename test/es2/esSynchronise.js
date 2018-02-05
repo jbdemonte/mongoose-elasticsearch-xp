@@ -260,7 +260,7 @@ describe('esSynchronise', () => {
           docSent++;
         });
 
-        return UserPluginModel.esSynchronize({}, '+age').then(() => {
+        return UserPluginModel.esSynchronize({}, { name: 1 }).then(() => {
           expect(error).to.be.equal(0);
           expect(docSent).to.be.equal(users.length);
           expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
@@ -276,7 +276,7 @@ describe('esSynchronise', () => {
                   expect(result.hits.total).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(user.name);
-                  expect(hit._source.age).to.be.equal(user.age);
+                  expect(hit._source.age).to.be.equal(undefined);
                   resolve();
                 })
                 .catch(err => {
@@ -554,7 +554,7 @@ describe('esSynchronise', () => {
         });
 
         return new utils.Promise((resolve, reject) => {
-          UserPluginModel.esSynchronize({}, '+age', err => {
+          UserPluginModel.esSynchronize({}, 'age', err => {
             if (err) {
               reject(err);
               return;
@@ -574,7 +574,7 @@ describe('esSynchronise', () => {
                 .then(result => {
                   expect(result.hits.total).to.eql(1);
                   const hit = result.hits.hits[0];
-                  expect(hit._source.name).to.be.equal(user.name);
+                  expect(hit._source.name).to.be.equal(undefined);
                   expect(hit._source.age).to.be.equal(user.age);
                   resolve();
                 })

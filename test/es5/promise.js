@@ -1,15 +1,14 @@
 'use strict';
 
-const bluebird = require('bluebird');
 const utils = require('../utils');
 const mongoose = require('mongoose');
 
 const plugin = require('../../');
 
-describe('promise-bluebird', () => {
+describe('promise', () => {
   utils.setup();
 
-  it('should return bluebird promise', () => {
+  it('should return promise', () => {
     const UserSchema = new mongoose.Schema({
       name: String,
     });
@@ -18,6 +17,6 @@ describe('promise-bluebird', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
     const promise = UserModel.esCreateMapping();
-    expect(promise).to.be.an.instanceof(bluebird);
+    expect(promise).to.be.an.instanceof(Promise);
   });
 });

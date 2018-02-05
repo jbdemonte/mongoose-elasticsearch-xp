@@ -110,15 +110,14 @@ describe('esSearch', () => {
 
   it('should handle a full query', () => {
     return UserModel.esSearch({
-        query: { match_all: {} },
-        filter: { range: { age: { lt: 35 } } },
-      })
-      .then(result => {
-        expect(result.hits.total).to.eql(1);
-        const hit = result.hits.hits[0];
-        expect(hit._id).to.eql(users.jane._id.toString());
-        expect(hit._source).to.eql({ name: 'Jane', age: 34 });
-      });
+      query: { match_all: {} },
+      filter: { range: { age: { lt: 35 } } },
+    }).then(result => {
+      expect(result.hits.total).to.eql(1);
+      const hit = result.hits.hits[0];
+      expect(hit._id).to.eql(users.jane._id.toString());
+      expect(hit._source).to.eql({ name: 'Jane', age: 34 });
+    });
   });
 
   it('should handle a short query', () => {
