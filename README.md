@@ -33,8 +33,8 @@ This plugin is compatible with Elasticsearch version 2 and 5.
 
 mongoose-elasticsearch-xp requires:
 
-  - mongoose 4.2.2 or later
-  - elasticsearch 2.0 or later
+  - mongoose 4.9.0, 5.0.0 or later
+  - elasticsearch 2.0, 5.0 or later
 
 ## Why this plugin?
 
