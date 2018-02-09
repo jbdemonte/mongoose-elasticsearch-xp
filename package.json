@@ -1,6 +1,6 @@
 {
   "name": "mongoose-elasticsearch-xp",
-  "version": "5.2.0",
+  "version": "0.0.0-semantically-released",
   "description": "A mongoose plugin that indexes models into Elasticsearch 2 / 5 (an alternative to mongoosastic)",
   "tags": [
     "elasticsearch",
@@ -30,7 +30,8 @@
     "test-v5": "./node_modules/mocha/bin/mocha -t 10000 test/es5/*",
     "test-v5-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
     "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*",
-    "watch": "npm run test-v5 -- --watch"
+    "watch": "npm run test-v5 -- --watch",
+    "semantic-release": "semantic-release"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "coveralls": "^3.0.0",
+    "cz-conventional-changelog": "^2.1.0",
     "elasticsearch": "^14.1.0",
     "eslint": "^4.17.0",
     "eslint-config-airbnb-base": "^12.1.0",
@@ -52,6 +54,12 @@
     "mocha": "^5.0.0",
     "mongoose": "5.0.3",
     "prettier": "^1.10.2",
+    "semantic-release": "^12.4.1",
     "shortid": "^2.2.8"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
