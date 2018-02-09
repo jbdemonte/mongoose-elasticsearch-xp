@@ -31,8 +31,7 @@
     "test-v5-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
     "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*",
     "watch": "npm run test-v5 -- --watch",
-    "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "semantic-release": "semantic-release"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
@@ -56,8 +55,7 @@
     "mongoose": "5.0.3",
     "prettier": "^1.10.2",
     "semantic-release": "^12.4.1",
-    "shortid": "^2.2.8",
-    "travis-deploy-once": "^4.3.4"
+    "shortid": "^2.2.8"
   },
   "config": {
     "commitizen": {
