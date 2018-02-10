@@ -43,28 +43,26 @@ describe('countOnly', () => {
 
   it('should return count', () => {
     return UserModel.esCount(
-        {
-          query: { match_all: {} },
-          filter: { range: { age: { gte: 35 } } },
-        },
-        { countOnly: true }
-      )
-      .then(count => {
-        expect(count).to.eql(2);
-      });
+      {
+        query: { match_all: {} },
+        filter: { range: { age: { gte: 35 } } },
+      },
+      { countOnly: true }
+    ).then(count => {
+      expect(count).to.eql(2);
+    });
   });
 
   it('should return 0', () => {
     return UserModel.esCount(
-        {
-          query: { match_all: {} },
-          filter: { range: { age: { gte: 100 } } },
-        },
-        { countOnly: true }
-      )
-      .then(count => {
-        expect(count).to.eql(0);
-      });
+      {
+        query: { match_all: {} },
+        filter: { range: { age: { gte: 100 } } },
+      },
+      { countOnly: true }
+    ).then(count => {
+      expect(count).to.eql(0);
+    });
   });
 
   it('should return count when defined in plugin', () => {
@@ -80,12 +78,11 @@ describe('countOnly', () => {
     const UserModelCountOnly = mongoose.model('User', UserSchema);
 
     return UserModelCountOnly.esCount({
-        query: { match_all: {} },
-        filter: { range: { age: { gte: 35 } } },
-      })
-      .then(count => {
-        expect(count).to.eql(2);
-      });
+      query: { match_all: {} },
+      filter: { range: { age: { gte: 35 } } },
+    }).then(count => {
+      expect(count).to.eql(2);
+    });
   });
 
   it('should overwrite defined in plugin value', () => {
@@ -100,14 +97,13 @@ describe('countOnly', () => {
     const UserModelCountOnly = mongoose.model('User', UserSchema);
 
     return UserModelCountOnly.esCount(
-        {
-          query: { match_all: {} },
-          filter: { range: { age: { gte: 35 } } },
-        },
-        { countOnly: false }
-      )
-      .then(result => {
-        expect(result.count).to.eql(2);
-      });
+      {
+        query: { match_all: {} },
+        filter: { range: { age: { gte: 35 } } },
+      },
+      { countOnly: false }
+    ).then(result => {
+      expect(result.count).to.eql(2);
+    });
   });
 });
