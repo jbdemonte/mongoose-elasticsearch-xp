@@ -331,7 +331,7 @@ Book
   });
 ```
 
-`esSynchronise` use same parameters as [find](http://mongoosejs.com/docs/api.html#model_Model.find) method or alternativaly you can pass a mongoose query instance in order to use any specific methods like `.populate()`.
+`esSynchronise` use same parameters as [find](http://mongoosejs.com/docs/api.html#model_Model.find) method or alternatively you can pass a mongoose query instance in order to use any specific methods like `.populate()`.
 It allows to synchronize a subset of documents, modifying the default projection...
 
 ```javascript
