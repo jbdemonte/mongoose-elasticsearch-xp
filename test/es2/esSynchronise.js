@@ -587,6 +587,98 @@ describe('esSynchronise', () => {
       });
   });
 
+  it('should index the database using a mongoose query instance', () => {
+    const users = [];
+
+    const UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+    });
+
+    const UserModel = mongoose.model('User', UserSchema);
+
+    return UserModel.remove({})
+      .exec()
+      .then(() => {
+        for (let i = 0; i < 100; i++) {
+          users.push({
+            _id: mongoose.Types.ObjectId(),
+            name: `Bob${i}`,
+            age: i,
+          });
+        }
+        return UserModel.collection.insertMany(users);
+      })
+      .then(() => {
+        const UserPluginSchema = new mongoose.Schema({
+          name: String,
+          age: Number,
+        });
+
+        UserPluginSchema.plugin(plugin, { index: 'users', type: 'user' });
+
+        const UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
+
+        return utils
+          .deleteModelIndexes(UserPluginModel)
+          .then(() => {
+            return UserPluginModel.esCreateMapping();
+          })
+          .then(() => {
+            return UserPluginModel;
+          });
+      })
+      .then(UserPluginModel => {
+        let docSent = 0;
+        let sent = 0;
+        let error = 0;
+
+        UserPluginModel.on('es-bulk-error', () => {
+          error++;
+        });
+
+        UserPluginModel.on('es-bulk-sent', () => {
+          sent++;
+        });
+
+        UserPluginModel.on('es-bulk-data', () => {
+          docSent++;
+        });
+
+        const query = UserPluginModel.find({ age: { $gte: 90 } });
+        return new utils.Promise((resolve, reject) => {
+          UserPluginModel.esSynchronize(query, err => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            expect(error).to.be.equal(0);
+            expect(docSent).to.be.equal(10);
+            expect(sent).to.be.equal(1);
+            resolve(UserPluginModel);
+          });
+        });
+      })
+      .then(UserPluginModel => {
+        return UserPluginModel.esSearch({ match_all: {} }).then(result => {
+          expect(result.hits.total).to.eql(10);
+          const ids = result.hits.hits.map(hit => {
+            return hit._id;
+          });
+          const expected = users.slice(-10).map(user => {
+            return user._id.toString();
+          });
+          ids.sort();
+          expected.sort();
+          expect(ids).to.eql(expected);
+        });
+      });
+  });
+
   it('should index filtering', () => {
     const users = [];
 

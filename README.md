@@ -331,12 +331,22 @@ Book
   });
 ```
 
-`esSynchronise` use same parameters as [find](http://mongoosejs.com/docs/api.html#model_Model.find) method.
+`esSynchronise` use same parameters as [find](http://mongoosejs.com/docs/api.html#model_Model.find) method or alternativaly you can pass a mongoose query instance in order to use any specific methods like `.populate()`.
 It allows to synchronize a subset of documents, modifying the default projection...
 
 ```javascript
 Book
   .esSynchronize({author: 'Arthur C. Clarke'}, '+resume')
+  .then(function () {
+    console.log('end.');
+  });
+```
+
+```javascript
+// using a mongoose query instance, populating the author `ref`
+const query = Book.find({author: 'Arthur C. Clarke'}).populate('author')
+Book
+  .esSynchronize(query, '+resume')
   .then(function () {
     console.log('end.');
   });
