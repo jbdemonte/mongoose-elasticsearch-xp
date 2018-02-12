@@ -587,6 +587,111 @@ describe('esSynchronise', () => {
       });
   });
 
+  it('should index the database using a mongoose query instance', () => {
+    const users = [];
+
+    // beware: indexing a document require two entry in the buffer
+    // 10 doc in buffer = buffer.length = 20
+    const bulkSize = 20;
+
+    const UserSchema = new mongoose.Schema({
+      name: String,
+      age: Number,
+    });
+
+    const UserModel = mongoose.model('User', UserSchema);
+
+    return UserModel.remove({})
+      .exec()
+      .then(() => {
+        for (let i = 0; i < 100; i++) {
+          users.push({
+            _id: mongoose.Types.ObjectId(),
+            name: `Bob${i}`,
+            age: i,
+          });
+        }
+        return UserModel.collection.insertMany(users);
+      })
+      .then(() => {
+        const UserPluginSchema = new mongoose.Schema({
+          name: String,
+          age: Number,
+        });
+
+        UserPluginSchema.plugin(plugin, {
+          index: 'users',
+          type: 'user',
+          bulk: { size: bulkSize },
+        });
+
+        const UserPluginModel = mongoose.model(
+          'UserPlugin',
+          UserPluginSchema,
+          'users'
+        );
+
+        return utils
+          .deleteModelIndexes(UserPluginModel)
+          .then(() => {
+            return UserPluginModel.esCreateMapping();
+          })
+          .then(() => {
+            return UserPluginModel;
+          });
+      })
+      .then(UserPluginModel => {
+        let docSent = 0;
+        let sent = 0;
+        let error = 0;
+
+        UserPluginModel.on('es-bulk-error', () => {
+          error++;
+        });
+
+        UserPluginModel.on('es-bulk-sent', () => {
+          sent++;
+        });
+
+        UserPluginModel.on('es-bulk-data', () => {
+          docSent++;
+        });
+
+        const query = UserPluginModel.find();
+        return new utils.Promise((resolve, reject) => {
+          UserPluginModel.esSynchronize(query, err => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            expect(error).to.be.equal(0);
+            expect(docSent).to.be.equal(users.length);
+            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            resolve(UserPluginModel);
+          });
+        });
+      })
+      .then(UserPluginModel => {
+        return utils.Promise.all(
+          users.map(user => {
+            return new utils.Promise((resolve, reject) => {
+              UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
+                .then(result => {
+                  expect(result.hits.total).to.eql(1);
+                  const hit = result.hits.hits[0];
+                  expect(hit._source.name).to.be.equal(user.name);
+                  expect(hit._source.age).to.be.equal(user.age);
+                  resolve();
+                })
+                .catch(err => {
+                  reject(err);
+                });
+            });
+          })
+        );
+      });
+  });
+
   it('should index filtering', () => {
     const users = [];
 
