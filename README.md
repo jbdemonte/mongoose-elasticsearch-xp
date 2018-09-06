@@ -19,6 +19,7 @@ This plugin is compatible with Elasticsearch version 2 and 5.
   - [Unsetting fields](#unsetting-fields)
   - [Adding fields](#adding-fields)
   - [Change fields value](#change-fields-value)
+  - [Using with mongoose discriminators](#using-with-mongoose-discriminators)
 - [Mapping](#mapping)
   - [Creating mappings on-demand](#creating-mappings-on-demand)
 - [Queries](#queries)
@@ -44,7 +45,7 @@ This plugin handle both callback and promise syntaxes. It uses the mongoose Prom
 
 ## Installation
 
-The latest version of this package will be as close as possible to the latest `elasticsearch` and `mongoose` packages. 
+The latest version of this package will be as close as possible to the latest `elasticsearch` and `mongoose` packages.
 
 ```bash
 npm install --save mongoose-elasticsearch-xp
@@ -73,7 +74,7 @@ The examples below use the version 5 syntax.
 Options are:
 
 * `index` - the index in Elasticsearch to use. Defaults to the collection name.
-* `type`  - the type this model represents in Elasticsearch. Defaults to the model name.
+* `type`  - the type this model represents in Elasticsearch. Defaults to the model name. It may be a function `(modelName) => typeName`.
 * `client` - an existing Elasticsearch `Client` instance.
 * `hosts` - an array hosts Elasticsearch is running on.
 * `host` - the host Elasticsearch is running on.
@@ -100,8 +101,8 @@ var mongoose = require('mongoose');
 var mexp = require('mongoose-elasticsearch-xp');
 
 var UserSchema = new mongoose.Schema({
-    name: String, 
-    email: String, 
+    name: String,
+    email: String,
     city: String
 });
 
@@ -110,18 +111,18 @@ UserSchema.plugin(mexp);
 var User = mongoose.model('User', UserSchema);
 ```
 
-This will by default simply use the collection name as the index while using the model name itself as the type. 
-So if you create a new User object and save it, you can see it by navigating to http://localhost:9200/users/user/_search 
-(this assumes Elasticsearch is running locally on port 9200). 
+This will by default simply use the collection name as the index while using the model name itself as the type.
+So if you create a new User object and save it, you can see it by navigating to http://localhost:9200/users/user/_search
+(this assumes Elasticsearch is running locally on port 9200).
 
-The default behavior is all fields get indexed into Elasticsearch. 
+The default behavior is all fields get indexed into Elasticsearch.
 This can be a little wasteful especially considering that the document is now just being duplicated between mongodb and Elasticsearch so you should consider opting to index only certain fields by specifying `es_indexed` on the fields you want to store:
 
 
 ```javascript
 var UserSchema = new mongoose.Schema({
-    name: {type: String, es_indexed: true}, 
-    email: String, 
+    name: {type: String, es_indexed: true},
+    email: String,
     city: String
 });
 
@@ -177,7 +178,7 @@ User
   });
 ```
 
-To connect to more than one host, you can use an array of hosts. 
+To connect to more than one host, you can use an array of hosts.
 
 ```javascript
 MyModel.plugin(mexp, {
@@ -202,8 +203,8 @@ MyModel.plugin(mexp, {
 ## Indexing
 
 ### Saving a document
-The indexing takes place after saving inside the mongodb and is a deferred process. 
-One can check the end of the indexion catching `es-indexed` event. 
+The indexing takes place after saving inside the mongodb and is a deferred process.
+One can check the end of the indexion catching `es-indexed` event.
 This event is emitted both from the document and the model (which make unit tests easier).
 
 ```javascript
@@ -223,15 +224,15 @@ In order to index nested models you can refer following example.
 
 ```javascript
 var CommentSchema = new mongoose.Schema({
-    title: String, 
-    body: String, 
+    title: String,
+    body: String,
     author: String
 });
 
 var UserSchema = new mongoose.Schema({
-    name: {type: String, es_indexed: true}, 
-    email: String, 
-    city: String, 
+    name: {type: String, es_indexed: true},
+    email: String,
+    city: String,
     comments: {type: [CommentSchema], es_indexed: true}
 });
 
@@ -268,10 +269,10 @@ var CitySchema = new mongoose.Schema({
 var City = mongoose.model('City', CitySchema);
 
 var UserSchema = new mongoose.Schema({
-    name: String, 
+    name: String,
     city: {
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'City', 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'City',
         es_type: {
             name: {
                 es_type: 'string'
@@ -300,7 +301,7 @@ var User = mongoose.model('User', UserSchema);
 
 
 ### Indexing An Existing Collection
-Already have a mongodb collection that you'd like to index using this plugin? 
+Already have a mongodb collection that you'd like to index using this plugin?
 No problem! Simply call the `esSynchronize` method on your model to open a mongoose stream and start indexing documents individually.
 
 ```javascript
@@ -407,7 +408,7 @@ If [dynamic-scripting](https://www.elastic.co/guide/en/elasticsearch/reference/2
 
 
 ### Adding fields
-`es_extend` allows to add some fields which does not exist in the mongoose schema. 
+`es_extend` allows to add some fields which does not exist in the mongoose schema.
 It is defined in the options of the schema definition.
 When adding some fields, `es_type` and `es_value` are mandatories.
 
@@ -436,7 +437,7 @@ The `es_value` parameter can be either a value or a function returning a value, 
 ### Change fields value
 `es_value` allows to replace the value of a field. It can be either a value or a function which will return the value to index.
 If the type changes, it is mandatory to set the correct `es_type`.
- 
+
 ```javascript
 var TagSchema = new mongoose.Schema({
   _id: false,
@@ -447,7 +448,7 @@ var UserSchema = new mongoose.Schema({
   name: String,
   xyz: {
     type: Number,
-    es_value: 123               // <= whatever the model.xyz value is, the xyz indexed will be 123 in ES 
+    es_value: 123               // <= whatever the model.xyz value is, the xyz indexed will be 123 in ES
   },
   tags: {
     type: [TagSchema],
@@ -487,24 +488,55 @@ context contains:
 * `container` the container of the original value (which is equal to the `document` when it is not a nested object)
 * `field` the key name
 
+### Using with mongoose discriminators
+
+You may save discriminator models' data in different Elasticsearch types with different mappings. To make it possible you should provide `type` option as a function. You will get `modelName` as an argument and must return type name for Elasticsearch.
+
+```js
+// define base Schema with base Model
+const BaseSchema = new mongoose.Schema({
+  name: String,
+});
+const BaseModel = mongoose.model('Base', BaseSchema);
+
+// define discriminator models
+const UserModel = BaseModel.discriminator('User', new mongoose.Schema({
+  age: Number,
+}));
+
+const AdminModel = BaseModel.discriminator('Admin', new mongoose.Schema({
+  access: Boolean,
+}));
+
+// add mexp plugin to the base Schema, with `type` as a function
+BaseSchema.plugin(mexp, {
+  index: 'user',
+  type: kind => {
+    if (kind === 'User') return 'userType';
+    if (kind === 'Admin') return 'adminType';
+    return 'base';
+  },
+});
+```
+
 
 ## Mapping
 
-Schemas can be configured to have special options per field. These match with the existing [mapping parameters](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-params.html) defined by Elasticsearch with the only difference being they are all prefixed by `es_`. 
+Schemas can be configured to have special options per field. These match with the existing [mapping parameters](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-params.html) defined by Elasticsearch with the only difference being they are all prefixed by `es_`.
 
 So for example. If you wanted to index a book model and have the boost for title set to 2.0 (giving it greater priority when searching) you'd define it as follows:
 
 ```javascript
 var BookSchema = new mongoose.Schema({
-    title: {type: String, es_boost: 2.0}, 
-    author: {type: String, es_null_value: "Unknown Author"}, 
-    publicationDate: {type: Date, es_type: 'date'} 
-}); 
+    title: {type: String, es_boost: 2.0},
+    author: {type: String, es_null_value: "Unknown Author"},
+    publicationDate: {type: Date, es_type: 'date'}
+});
 
 ```
 This example uses a few other mapping fields... such as null_value and type (which overrides whatever value the schema type is, useful if you want stronger typing such as float).
 
-There are various mapping options that can be defined in Elasticsearch. Check out [https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html/](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html) for more information. 
+There are various mapping options that can be defined in Elasticsearch. Check out [https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html/](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html) for more information.
 
 ### Creating Mappings On Demand
 
@@ -512,10 +544,10 @@ You can do on-demand create a mapping using the `esCreateMapping` function.
 
 Creating the mapping is a one time operation and can be done as follows:
 
-```javascript 
+```javascript
 var UserSchema = new mongoose.Schema({
-    name: String, 
-    email: String, 
+    name: String,
+    email: String,
     city: String
 });
 
@@ -540,11 +572,11 @@ User
 
 ```
 
-You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping. 
-If the mapping already exists, an Exception detailing such will be populated in the `err` argument. 
+You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping.
+If the mapping already exists, an Exception detailing such will be populated in the `err` argument.
 
 ## Queries
-The full query DSL of Elasticsearch is exposed through the `esSearch` method. 
+The full query DSL of Elasticsearch is exposed through the `esSearch` method.
 For example, if you wanted to find all people between ages 21 and 30:
 
 ```javascript
@@ -552,7 +584,7 @@ Person
   .esSearch({
     range: {
       age: {
-        from: 21, 
+        from: 21,
         to: 30
       }
     }
@@ -588,7 +620,7 @@ Person
 ```
 
 ### Hydration
-By default objects returned from performing a search will be the objects as is in Elasticsearch. 
+By default objects returned from performing a search will be the objects as is in Elasticsearch.
 This is useful in cases where only what was indexed needs to be displayed (think a list of results) while the actual mongoose object contains the full data when viewing one of the results.
 
 However, if you want the results to be actual mongoose objects you can provide {hydrate: true} as the second argument to a search call.
@@ -675,7 +707,7 @@ User
 
 
 ### Getting only Ids
-A variant to hydration may be to get only ids instead of the complete Elasticsearch result. 
+A variant to hydration may be to get only ids instead of the complete Elasticsearch result.
 Using `idsOnly` will return the ids cast in mongoose ObjectIds.
 
 ```javascript
@@ -687,7 +719,7 @@ User
 ```
 
 ## Count
-The [count API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-count.html) is available using the `esCount` function. 
+The [count API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-count.html) is available using the `esCount` function.
 It handle the same queries as the `esSearch` method (string query, full query...).
 
 ```javascript
