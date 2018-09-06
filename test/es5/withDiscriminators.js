@@ -7,7 +7,7 @@ const plugin = require('../../');
 describe('with discriminators', () => {
   utils.setup();
 
-  it('type from fn() provided by user', () => {
+  it('check types and mappings', () => {
     const BaseSchema = new mongoose.Schema({
       name: String,
     });
@@ -33,19 +33,58 @@ describe('with discriminators', () => {
     const UserModel = BaseModel.discriminator('User', UserSchema);
     const AdminModel = BaseModel.discriminator('Admin', AdminSchema);
 
-    // check types on Models
+    // check types and mappings on models
     const userOpts = UserModel.esOptions();
     const adminOpts = AdminModel.esOptions();
     expect(userOpts.type).to.equal('userType');
     expect(adminOpts.type).to.equal('adminType');
+    expect(userOpts.mapping).to.deep.equal({
+      properties: {
+        __t: {
+          type: 'text',
+        },
+        age: {
+          type: 'double',
+        },
+        name: {
+          type: 'text',
+        },
+      },
+    });
+    expect(adminOpts.mapping).to.deep.equal({
+      properties: {
+        __t: {
+          type: 'text',
+        },
+        access: {
+          type: 'boolean',
+        },
+        name: {
+          type: 'text',
+        },
+      },
+    });
 
-    // check types on docs
+    // check types and mappings on docs
     UserModel.create({
       name: 'John',
       age: 34,
     }).then(doc => {
       const opts = doc.esOptions();
       expect(opts.type).to.equal('userType');
+      expect(opts.mapping).to.deep.equal({
+        properties: {
+          __t: {
+            type: 'text',
+          },
+          age: {
+            type: 'double',
+          },
+          name: {
+            type: 'text',
+          },
+        },
+      });
     });
 
     AdminModel.create({
@@ -54,6 +93,19 @@ describe('with discriminators', () => {
     }).then(doc => {
       const opts = doc.esOptions();
       expect(opts.type).to.equal('adminType');
+      expect(opts.mapping).to.deep.equal({
+        properties: {
+          __t: {
+            type: 'text',
+          },
+          access: {
+            type: 'boolean',
+          },
+          name: {
+            type: 'text',
+          },
+        },
+      });
     });
   });
 });
