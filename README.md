@@ -92,7 +92,7 @@ Options are:
 * `bulk.batch` - [batchSize](https://docs.mongodb.com/manual/reference/method/cursor.batchSize/) to use on synchronise options. Defaults to 50.
 * `bulk.size` - bulk element count to wait before calling `client.bulk` function. Defaults to 1000.
 * `bulk.delay` - idle time to wait before calling the `client.bulk` function. Defaults to 1000.
-* `onlyOnDemandIndexing` - whether or not to demand indexing on CRUD operations. If set to false middleware hooks for save, delete Defaults to true.
+* `onlyOnDemandIndexing` - whether or not to demand indexing on CRUD operations. If set to true middleware hooks for save, update, delete do not fire. Defaults to false.
 
 
 To have a model indexed into Elasticsearch simply add the plugin.
