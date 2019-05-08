@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
 const shortid = require('shortid');
+const utils = require('../utils');
 const plugin = require('../../').v2;
 
 describe('custom ids', () => {

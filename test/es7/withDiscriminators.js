@@ -70,6 +70,11 @@ describe('with discriminators', () => {
       name: 'John',
       age: 34,
     }).then(doc => {
+      /**
+       * These pass but the Elastic7 log say:
+       * {"type": "server", "timestamp": "2019-05-08T15:09:00,289+0000", "level": "DEBUG", "component": "o.e.a.b.TransportShardBulkAction", "cluster.name": "elasticsearch_xp", "node.name": "es01", "cluster.uuid": "_g29fS-XRXCCEnkZWlr66A", "node.id": "DhuxhmaORjq7rYNNCHh_fQ",  "message": "[user][0] failed to execute bulk item (index) index {[user][userType][5cd2f10ce12850a22363f951], source[{\"age\":34,\"name\":\"John\",\"__t\":\"User\"}]}" ,
+       * "stacktrace": ["java.lang.IllegalArgumentException: Rejecting mapping update to [user] as the final mapping would have more than 1 type: [adminType, userType]",
+       */
       const opts = doc.esOptions();
       expect(opts.type).to.equal('userType');
       expect(opts.mapping).to.deep.equal({

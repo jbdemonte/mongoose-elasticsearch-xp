@@ -3,7 +3,7 @@
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][coverage-image]][coverage-url]
 
 mongoose-elasticsearch-xp is a [mongoose](http://mongoosejs.com/) plugin that can automatically index your models into [elasticsearch](http://www.elasticsearch.org/).
-This plugin is compatible with Elasticsearch version 2 and 5.
+This plugin is compatible with Elasticsearch version 2,5,6 and 7.
 
 - [Prerequisite](#prerequisite)
 - [Why this plugin?](#why-this-plugin)
@@ -35,7 +35,7 @@ This plugin is compatible with Elasticsearch version 2 and 5.
 mongoose-elasticsearch-xp requires:
 
   - mongoose 4.9.0, 5.0.0 or later
-  - elasticsearch 2.0, 5.0 or later
+  - elasticsearch 2.0, 5.0, 6.0, 7.0 or later
 
 ## Why this plugin?
 
@@ -53,12 +53,14 @@ npm install --save mongoose-elasticsearch-xp
 
 ## Important
 
-This plugin is configured to work with the latest version (5.x.y).
+This plugin is configured to work with the latest version (7.x.y).
 In order to use it with Elasticsearch 2.x.y, you need to use the `v2` version:
 
 ```javascript
 var mexp = require('mongoose-elasticsearch-xp').v2;
 ```
+
+Likewise for `.v5`, `.v6`, only `7` is default for now.
 
 The examples below use the version 5 syntax.
 
@@ -573,6 +575,8 @@ User
 
 ```
 
+⚠️ For `v7` `analysis` needs to be wrapped in a `settings` object. Please refer to: `test/es7/model-mapping.js`
+
 You'll have to manage whether or not you need to create the mapping, mongoose-elasticsearch-xp will make no assumptions and simply attempt to create the mapping.
 If the mapping already exists, an Exception detailing such will be populated in the `err` argument.
 
@@ -779,7 +783,19 @@ User
   });
 ```
 
+#### Breaking changes for elastic v7.0
 
+[List](https://www.elastic.co/guide/en/elasticsearch/reference/current/breaking-changes-7.0.html#breaking_70_analysis_changes)
+
+1 - Elasticsearch _Type has been removed
+2 - Elasticsearch SQL
+3 - Index lifecycle management
+4 - Standard token filter has been removed
+5 - nGram and edgeNGram token filter cannot be used on new indices
+    should be replaces by ngram or edge_ngram
+6 - Shards number on index creation is now `1` instead of `5`
+
+This library handles types fine for now but keep that in mind that they will be gone for v8.0.
 
 [npm-url]: https://npmjs.org/package/mongoose-elasticsearch-xp
 [npm-image]: https://badge.fury.io/js/mongoose-elasticsearch-xp.svg

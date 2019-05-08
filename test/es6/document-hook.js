@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../').v5;
 
 describe('document-hook', () => {
   utils.setup();

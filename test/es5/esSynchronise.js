@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../').v5;
 
 describe('esSynchronise', () => {
   utils.setup();
@@ -80,7 +80,7 @@ describe('esSynchronise', () => {
         return UserPluginModel.esSynchronize().then(() => {
           expect(error).to.be.equal(0);
           expect(docSent).to.be.equal(users.length);
-          expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+          expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
           return UserPluginModel;
         });
       })
@@ -263,7 +263,7 @@ describe('esSynchronise', () => {
         return UserPluginModel.esSynchronize({}, { name: 1 }).then(() => {
           expect(error).to.be.equal(0);
           expect(docSent).to.be.equal(users.length);
-          expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+          expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
           return UserPluginModel;
         });
       })
@@ -366,7 +366,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });
@@ -561,7 +561,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });
@@ -666,7 +666,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });

@@ -753,7 +753,7 @@ describe('document-hook', () => {
       );
   });
 
-  it.only('should handle FindOneAndUpdate', () => {
+  it('should handle FindOneAndUpdate', () => {
     let UserSchema = new mongoose.Schema({
       name: String,
       age: Number,

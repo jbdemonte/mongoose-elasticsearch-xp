@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../').v5;
 
 describe('es_value', () => {
   utils.setup();
@@ -45,7 +45,7 @@ describe('es_value', () => {
           expect(context.document === john).to.be.true;
           expect(context.container === john).to.be.true;
           expect(context.field).to.eql('age');
-          return age - age % 10;
+          return age - (age % 10);
         },
       },
       tags: {
