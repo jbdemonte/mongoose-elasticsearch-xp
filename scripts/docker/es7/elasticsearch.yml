@@ -1,0 +1,7 @@
+transport.host: localhost
+network.host: 127.0.0.1
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+cluster.name: elasticsearch_xp
+node.name: es01
+cluster.initial_master_nodes: es01

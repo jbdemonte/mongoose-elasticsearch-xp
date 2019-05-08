@@ -1,7 +1,7 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
+const utils = require('../utils');
 const plugin = require('../../').v2;
 
 describe('model-mapping', () => {
@@ -865,6 +865,7 @@ describe('model-mapping', () => {
         expect(result.hits.hits[0]._source).to.eql({
           first: 'Maurice',
           last: 'Moss',
+          company: { _id: company.id },
         });
       });
   });

@@ -1,7 +1,7 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
+const utils = require('../utils');
 const plugin = require('../../').v2;
 
 describe('esSearch', () => {

@@ -1,5 +1,4 @@
 language: node_js
-
 cache:
   yarn: true
   directories:
@@ -12,27 +11,43 @@ node_js:
 addons:
   apt:
     packages:
-      - oracle-java8-set-default
+      - oracle-java9-set-default
 
 services:
   - mongodb
+  - elasticsearch
 
 env:
   - ES=2
   - ES=5
+  - ES=6
+  - ES=7
 
 before_install:
   - if [ "$ES" -eq "2" ]; then echo "DOWNLOADING V2"; curl -O https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.2.0/elasticsearch-2.2.0.deb && sudo dpkg -i --force-confnew elasticsearch-2.2.0.deb ; fi
   - if [ "$ES" -eq "5" ]; then echo "DOWNLOADING V5"; curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.0.0.deb && sudo dpkg -i --force-confnew elasticsearch-5.0.0.deb ; fi
-  - 'echo "script.inline: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
+  - if [ "$ES" -eq "6" ]; then echo "DOWNLOADING V6"; curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.0.0.deb && sudo dpkg -i --force-confnew elasticsearch-6.0.0.deb ; fi
+  - if [ "$ES" -eq "7" ]; then echo "DOWNLOADING V7"; curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.0.1-amd64.deb && sudo dpkg -i --force-confnew elasticsearch-7.0.1-amd64.deb ; fi
+  - echo `pwd`
+  - sudo cat ./scripts/docker/es${ES}/elasticsearch.yml |sudo tee -a /etc/elasticsearch/elasticsearch.yml
   - sudo cat /etc/elasticsearch/elasticsearch.yml
-  - sudo service elasticsearch start
-  - sleep 5
+  - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch # https://discuss.elastic.co/t/permission-denied-starting-elasticsearch-7-0/179336
+  - sudo chown -R elasticsearch:elasticsearch /etc/elasticsearch
+  - sudo chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+  - if [ "$ES" -eq "5" -o "$ES" -eq "6" ];then sudo service elasticsearch start; fi
+  - if [ "$ES" -eq "2" -o "$ES" -eq "7" ];then sudo service elasticsearch restart; fi
+  - sleep 15
+  - sudo tail -n50 /var/log/elasticsearch/elasticsearch_xp.log || true # Don't die on this
   - sudo service elasticsearch status
 
 script:
   - if [ "$ES" -eq "2" ]; then echo "RUNNING V2"; npm run-script test-v2-covered ; fi
   - if [ "$ES" -eq "5" ]; then echo "RUNNING V5"; npm run-script test-v5-covered ; fi
+  - if [ "$ES" -eq "6" ]; then echo "RUNNING V6"; npm run-script test-v6-covered ; fi
+  - if [ "$ES" -eq "7" ]; then echo "RUNNING V7"; npm run-script test-v7-covered ; fi
+  
+
+
 
 
 after_success:

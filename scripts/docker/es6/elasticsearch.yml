@@ -1,0 +1,5 @@
+transport.host: localhost
+network.host: _eth0_
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+cluster.name: elasticsearch_xp

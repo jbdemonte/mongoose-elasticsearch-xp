@@ -9,6 +9,7 @@
     "func-names": 0,
     "import/no-extraneous-dependencies": 0,
     "strict": 0,
+    "import/no-cycle": 0,
     "no-use-before-define": 0
   }
 }
