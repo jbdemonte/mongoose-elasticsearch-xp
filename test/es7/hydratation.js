@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 const utils = require('../utils');
-const plugin = require('../../');
+const plugin = require('../../').v7;
 
 describe('hydratation', () => {
   utils.setup();

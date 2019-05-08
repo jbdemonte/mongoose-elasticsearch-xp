@@ -56,11 +56,14 @@ npm install --save mongoose-elasticsearch-xp
 This plugin is configured to work with the latest version (7.x.y).
 In order to use it with Elasticsearch 2.x.y, you need to use the `v2` version:
 
+It is **very strongly** recommended to fix your version by using the require with the elastic
+to prevent breaking changes
+
 ```javascript
 var mexp = require('mongoose-elasticsearch-xp').v2;
 ```
 
-Likewise for `.v5`, `.v6`, only `7` is default for now.
+Likewise for `.v5`, `.v6`, and `.v7`, `v5` is default for now.
 
 The examples below use the version 5 syntax.
 
@@ -796,6 +799,26 @@ User
 6 - Shards number on index creation is now `1` instead of `5`
 
 This library handles types fine for now but keep that in mind that they will be gone for v8.0.
+
+#### Contributing
+
+You will need a *mongodb* running locally either via docker or your own
+The tests currently write in a `test` collection.
+
+Ideally you would run: (example for v7)
+
+Your mongodb then,
+In one terminal: `npm run docker-v7`
+In another: `npm run test-v7`
+
+All the docker images load their own `elasticsearch.yml` config,
+In the case of `es7` you might need to edit the line
+```yml
+network.host: 127.0.0.1
+```
+for
+`network.host: _eth0_` 
+in order to test locally (**don't** commit this file change or it will break travis).
 
 [npm-url]: https://npmjs.org/package/mongoose-elasticsearch-xp
 [npm-image]: https://badge.fury.io/js/mongoose-elasticsearch-xp.svg
