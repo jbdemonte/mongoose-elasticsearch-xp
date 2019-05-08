@@ -2,7 +2,7 @@
 
 const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const plugin = require('../../');
 
 describe('esRefresh', () => {
   utils.setup();

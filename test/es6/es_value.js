@@ -1,8 +1,10 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../').v5;
+
+
 
 describe('es_value', () => {
   utils.setup();
@@ -45,12 +47,12 @@ describe('es_value', () => {
           expect(context.document === john).to.be.true;
           expect(context.container === john).to.be.true;
           expect(context.field).to.eql('age');
-          return age - age % 10;
+          return age - (age % 10);
         },
       },
       tags: {
         type: [TagSchema],
-        es_type: 'string',
+        es_type: 'text',
         es_value(tags, context) {
           expect(tags === john.tags).to.be.true;
           expect(context.document === john).to.be.true;
@@ -131,7 +133,7 @@ describe('es_value', () => {
       obj: {
         type: String,
         es_type: {
-          a: { es_type: 'string' },
+          a: { es_type: 'text' },
           b: { es_type: 'integer' },
         },
         es_value: {

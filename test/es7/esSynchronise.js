@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../');
 
 describe('esSynchronise', () => {
   utils.setup();
@@ -21,7 +21,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -80,7 +80,7 @@ describe('esSynchronise', () => {
         return UserPluginModel.esSynchronize().then(() => {
           expect(error).to.be.equal(0);
           expect(docSent).to.be.equal(users.length);
-          expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+          expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
           return UserPluginModel;
         });
       })
@@ -90,7 +90,7 @@ describe('esSynchronise', () => {
             return new utils.Promise((resolve, reject) => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
-                  expect(result.hits.total).to.eql(1);
+                  expect(result.hits.total.value).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(user.name);
                   expect(hit._source.age).to.be.equal(user.age);
@@ -115,7 +115,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -176,7 +176,7 @@ describe('esSynchronise', () => {
       })
       .then(UserPluginModel => {
         return UserPluginModel.esSearch({ match_all: {} }).then(result => {
-          expect(result.hits.total).to.eql(10);
+          expect(result.hits.total.value).to.eql(10);
           const ids = result.hits.hits.map(hit => {
             return hit._id;
           });
@@ -204,7 +204,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -263,7 +263,7 @@ describe('esSynchronise', () => {
         return UserPluginModel.esSynchronize({}, { name: 1 }).then(() => {
           expect(error).to.be.equal(0);
           expect(docSent).to.be.equal(users.length);
-          expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+          expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
           return UserPluginModel;
         });
       })
@@ -273,7 +273,7 @@ describe('esSynchronise', () => {
             return new utils.Promise((resolve, reject) => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
-                  expect(result.hits.total).to.eql(1);
+                  expect(result.hits.total.value).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(user.name);
                   expect(hit._source.age).to.be.equal(undefined);
@@ -302,7 +302,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -366,7 +366,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });
@@ -377,7 +377,7 @@ describe('esSynchronise', () => {
             return new utils.Promise((resolve, reject) => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
-                  expect(result.hits.total).to.eql(1);
+                  expect(result.hits.total.value).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(user.name);
                   expect(hit._source.age).to.be.equal(user.age);
@@ -402,7 +402,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -469,7 +469,7 @@ describe('esSynchronise', () => {
       })
       .then(UserPluginModel => {
         return UserPluginModel.esSearch({ match_all: {} }).then(result => {
-          expect(result.hits.total).to.eql(10);
+          expect(result.hits.total.value).to.eql(10);
           const ids = result.hits.hits.map(hit => {
             return hit._id;
           });
@@ -497,7 +497,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -561,7 +561,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });
@@ -572,7 +572,7 @@ describe('esSynchronise', () => {
             return new utils.Promise((resolve, reject) => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
-                  expect(result.hits.total).to.eql(1);
+                  expect(result.hits.total.value).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(undefined);
                   expect(hit._source.age).to.be.equal(user.age);
@@ -601,7 +601,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -666,7 +666,7 @@ describe('esSynchronise', () => {
             }
             expect(error).to.be.equal(0);
             expect(docSent).to.be.equal(users.length);
-            expect(sent).to.be.equal(Math.ceil(2 * users.length / bulkSize));
+            expect(sent).to.be.equal(Math.ceil((2 * users.length) / bulkSize));
             resolve(UserPluginModel);
           });
         });
@@ -677,7 +677,7 @@ describe('esSynchronise', () => {
             return new utils.Promise((resolve, reject) => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
-                  expect(result.hits.total).to.eql(1);
+                  expect(result.hits.total.value).to.eql(1);
                   const hit = result.hits.hits[0];
                   expect(hit._source.name).to.be.equal(user.name);
                   expect(hit._source.age).to.be.equal(user.age);
@@ -702,7 +702,7 @@ describe('esSynchronise', () => {
 
     const UserModel = mongoose.model('User', UserSchema);
 
-    return UserModel.remove({})
+    return UserModel.deleteMany({})
       .exec()
       .then(() => {
         for (let i = 0; i < 100; i++) {
@@ -774,9 +774,9 @@ describe('esSynchronise', () => {
               UserPluginModel.esSearch({ match: { _id: user._id.toString() } })
                 .then(result => {
                   if (user.age < 80) {
-                    expect(result.hits.total).to.eql(0);
+                    expect(result.hits.total.value).to.eql(0);
                   } else {
-                    expect(result.hits.total).to.eql(1);
+                    expect(result.hits.total.value).to.eql(1);
                     const hit = result.hits.hits[0];
                     expect(hit._source.name).to.be.equal(user.name);
                     expect(hit._source.age).to.be.equal(user.age);

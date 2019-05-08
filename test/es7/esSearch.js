@@ -2,7 +2,7 @@
 
 const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const plugin = require('../../');
 
 describe('esSearch', () => {
   utils.setup();
@@ -66,7 +66,7 @@ describe('esSearch', () => {
 
   it('should handle a lucene query', () => {
     return UserModel.esSearch('name:jane').then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
       const hit = result.hits.hits[0];
       expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
@@ -79,7 +79,7 @@ describe('esSearch', () => {
         done(err);
         return;
       }
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
       const hit = result.hits.hits[0];
       expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
@@ -94,7 +94,7 @@ describe('esSearch', () => {
         done(err);
         return;
       }
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
       const hit = result.hits.hits[0];
       expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
@@ -110,7 +110,7 @@ describe('esSearch', () => {
         filter: { range: { age: { lt: 35 } } },
       },
     }).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
       const hit = result.hits.hits[0];
       expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
@@ -119,7 +119,7 @@ describe('esSearch', () => {
 
   it('should handle a short query', () => {
     return UserModel.esSearch({ match: { age: 34 } }).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
       const hit = result.hits.hits[0];
       expect(hit._id).to.eql(jane._id.toString());
       expect(hit._source).to.eql({ name: 'Jane', age: 34 });
@@ -128,7 +128,7 @@ describe('esSearch', () => {
 
   it('should handle 0 hit', () => {
     return UserModel.esSearch({ match: { age: 100 } }).then(result => {
-      expect(result.hits.total).to.eql(0);
+      expect(result.hits.total.value).to.eql(0);
     });
   });
 });

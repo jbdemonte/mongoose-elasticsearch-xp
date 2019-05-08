@@ -4,7 +4,7 @@ const cp = require('child_process');
 const path = require('path');
 
 const dockerImageName = 'elasticsearch-xp';
-const version = process.argv[2] || 5;
+const version = process.argv[2] || 7;
 
 function isDockerImageExists(imageNameWithTag) {
   const imageId = cp

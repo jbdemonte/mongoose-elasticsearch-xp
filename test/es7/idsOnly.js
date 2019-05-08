@@ -2,7 +2,7 @@
 
 const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const plugin = require('../../');
 
 describe('idsOnly', () => {
   utils.setup();
@@ -138,7 +138,7 @@ describe('idsOnly', () => {
       },
       { idsOnly: false }
     ).then(result => {
-      expect(result.hits.total).to.eql(2);
+      expect(result.hits.total.value).to.eql(2);
       let hit = result.hits.hits[0];
       expect(hit._id).to.eql(bob._id.toString());
       expect(hit._source).to.eql({ name: 'Bob', age: 36 });

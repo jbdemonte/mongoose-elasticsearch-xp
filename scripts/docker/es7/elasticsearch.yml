@@ -1,0 +1,15 @@
+#script.inline: true #Now enabled by default - Removed
+#
+#  After removing: New issue:
+#
+# ERROR: [1] bootstrap checks failed
+#   [1]: the default discovery settings are unsuitable for production use;
+#   at least one of [discovery.seed_hosts, discovery.seed_providers, cluster.initial_master_nodes]
+#   must be configured
+#
+#https://github.com/elastic/elasticsearch/issues/19987
+transport.host: localhost
+network.host: _eth0_
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+cluster.name: elasticsearch_xp

@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../');
 
 describe('es_extend', () => {
   utils.setup();
@@ -47,6 +47,7 @@ describe('es_extend', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -75,7 +76,7 @@ describe('es_extend', () => {
         });
       })
       .then(result => {
-        expect(result.hits.total).to.eql(1);
+        expect(result.hits.total.value).to.eql(1);
         expect(result.hits.hits[0]._source).to.eql({
           name: 'John',
           num: 123,

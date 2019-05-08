@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../');
 
 describe('with discriminators', () => {
   utils.setup();
@@ -44,7 +44,7 @@ describe('with discriminators', () => {
           type: 'text',
         },
         age: {
-          type: 'double',
+          type: 'long',
         },
         name: {
           type: 'text',
@@ -78,7 +78,7 @@ describe('with discriminators', () => {
             type: 'text',
           },
           age: {
-            type: 'double',
+            type: 'long',
           },
           name: {
             type: 'text',

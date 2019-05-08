@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../');
 
 describe('es_value', () => {
   utils.setup();
@@ -45,12 +45,12 @@ describe('es_value', () => {
           expect(context.document === john).to.be.true;
           expect(context.container === john).to.be.true;
           expect(context.field).to.eql('age');
-          return age - age % 10;
+          return age - (age % 10);
         },
       },
       tags: {
         type: [TagSchema],
-        es_type: 'string',
+        es_type: 'text',
         es_value(tags, context) {
           expect(tags === john.tags).to.be.true;
           expect(context.document === john).to.be.true;
@@ -101,7 +101,7 @@ describe('es_value', () => {
         });
       })
       .then(resp => {
-        expect(resp.hits.total).to.eql(1);
+        expect(resp.hits.total.value).to.eql(1);
         const hit = resp.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
@@ -131,7 +131,7 @@ describe('es_value', () => {
       obj: {
         type: String,
         es_type: {
-          a: { es_type: 'string' },
+          a: { es_type: 'text' },
           b: { es_type: 'integer' },
         },
         es_value: {
@@ -182,7 +182,7 @@ describe('es_value', () => {
         });
       })
       .then(resp => {
-        expect(resp.hits.total).to.eql(2);
+        expect(resp.hits.total.value).to.eql(2);
         let hit = resp.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({

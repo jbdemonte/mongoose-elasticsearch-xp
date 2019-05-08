@@ -2,7 +2,7 @@
 
 const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const plugin = require('../../');
 
 describe('hydratation', () => {
   utils.setup();
@@ -115,7 +115,7 @@ describe('hydratation', () => {
       { hydrate: true }
     ).then(result => {
       let hit;
-      expect(result.hits.total).to.eql(2);
+      expect(result.hits.total.value).to.eql(2);
 
       hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -182,7 +182,7 @@ describe('hydratation', () => {
     return UserModel.esSearch('name:jane', {
       hydrate: { select: 'name' },
     }).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -197,7 +197,7 @@ describe('hydratation', () => {
     return UserModel.esSearch('name:jane', {
       hydrate: { options: { lean: true } },
     }).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -221,7 +221,7 @@ describe('hydratation', () => {
     const UserModelHydrate = mongoose.model('User', UserSchema);
 
     return UserModelHydrate.esSearch('name:jane').then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -281,7 +281,7 @@ describe('hydratation', () => {
     const UserModelHydrate = mongoose.model('User', UserSchema);
 
     return UserModelHydrate.esSearch('name:jane').then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -305,7 +305,7 @@ describe('hydratation', () => {
     const UserModelHydrate = mongoose.model('User', UserSchema);
 
     return UserModelHydrate.esSearch('name:jane').then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -332,7 +332,7 @@ describe('hydratation', () => {
       'name:jane',
       { hydrate: { select: 'name' } } // not lean
     ).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit._source).to.be.undefined;
@@ -359,7 +359,7 @@ describe('hydratation', () => {
       'name:jane',
       { hydrate: false } // not lean
     ).then(result => {
-      expect(result.hits.total).to.eql(1);
+      expect(result.hits.total.value).to.eql(1);
 
       const hit = result.hits.hits[0];
       expect(hit.doc).to.be.undefined;
@@ -389,7 +389,7 @@ describe('hydratation', () => {
       }
     ).then(result => {
       let hit;
-      expect(result.hits.total).to.eql(2);
+      expect(result.hits.total.value).to.eql(2);
 
       hit = result.hits.hits[0];
 
@@ -447,7 +447,7 @@ describe('hydratation', () => {
       }
     ).then(result => {
       let hit;
-      expect(result.hits.total).to.eql(2);
+      expect(result.hits.total.value).to.eql(2);
 
       hit = result.hits.hits[0];
 

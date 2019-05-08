@@ -1,7 +1,7 @@
 'use strict';
 
-const mongoose = require('mongoose');
 const utils = require('../utils');
+const mongoose = require('mongoose');
 const plugin = require('../../').v5;
 
 describe('countOnly', () => {

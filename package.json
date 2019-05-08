@@ -21,45 +21,55 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "lint": "./node_modules/.bin/eslint lib test *.js",
+    "lint": "eslint lib test *.js",
     "docker-v2": "node ./scripts/docker/start 2 & wait",
-    "test-v2": "./node_modules/mocha/bin/mocha -t 10000 test/es2/*",
-    "test-v2-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
-    "test-v2-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es2/*",
+    "test-v2": "nyc mocha -t 10000 test/es2/*",
+    "test-v2-covered": "npm run lint && nyc mocha --report lcovonly -- -t 10000 -R spec ./test/es2/*",
+    "test-v2-covered-html": "nyc --reporter=lcov --reporter=text-lcov mocha -- -t 10000 -R spec ./test/es2/*",
     "docker-v5": "node ./scripts/docker/start 5 & wait",
-    "test-v5": "./node_modules/mocha/bin/mocha -t 10000 test/es5/*",
-    "test-v5-covered": "npm run lint && ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
-    "test-v5-covered-html": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -t 10000 -R spec ./test/es5/*",
-    "watch": "npm run test-v5 -- --watch",
+    "test-v5": "nyc mocha -t 10000 test/es5/*",
+    "test-v5-covered": "npm run lint && nyc --reporter=lcov --reporter=text-lcov mocha --report lcovonly -- -t 10000 -R spec ./test/es5/*",
+    "test-v5-covered-html": "nyc --reporter=lcov --reporter=text-lcov mocha -- -t 10000 -R spec ./test/es5/*",
+    "docker-v6": "node ./scripts/docker/start 6 & wait",
+    "test-v6": "nyc mocha -t 10000 test/es6/*",
+    "test-v6-covered": "npm run lint && nyc --reporter=lcov --reporter=text-lcov mocha --report lcovonly -- -t 10000 -R spec ./test/es6/*",
+    "test-v6-covered-html": "nyc --reporter=lcov --reporter=text-lcov mocha -- -t 10000 -R spec ./test/es6/*",
+    "docker-v7": "node ./scripts/docker/start 7 & wait",
+    "test-v7": "nyc mocha -t 10000 test/es7/*",
+    "test-v7-covered": "npm run lint && nyc --reporter=lcov --reporter=text-lcov mocha --report lcovonly -- -t 10000 -R spec ./test/es7/*",
+    "test-v7-covered-html": "nyc --reporter=lcov --reporter=text-lcov mocha -- -t 10000 -R spec ./test/es7/*",
+    "watch": "npm run test-v7 -- --watch",
     "semantic-release": "semantic-release"
   },
   "author": "Jean-Baptiste Demonte <jbdemonte@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
-    "elasticsearch": "^12.1.3 || ^13.0.0 || ^14.0.0",
+    "elasticsearch": "^12.1.3 || ^13.0.0 || ^14.0.0 || ^16.0.0",
     "mongoose": "^4.9.0 || ^5.0.0"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
-    "coveralls": "^3.0.0",
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.3",
     "cz-conventional-changelog": "^2.1.0",
-    "elasticsearch": "^14.1.0",
-    "eslint": "^4.18.1",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-config-prettier": "^2.9.0",
-    "eslint-plugin-chai-expect": "^1.1.1",
+    "elasticsearch": "^16.0.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.2.0",
+    "eslint-plugin-chai-expect": "^2.0.1",
     "eslint-plugin-import": "^2.9.0",
-    "eslint-plugin-prettier": "^2.6.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^5.0.1",
-    "mongoose": "5.0.7",
-    "prettier": "^1.11.0",
-    "semantic-release": "^12.4.1",
+    "eslint-plugin-prettier": "^3.0.1",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.0",
+    "prettier": "^1.17.0",
+    "semantic-release": "^15.13.3",
     "shortid": "^2.2.8"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "mongoose": "^5.5.6"
   }
 }

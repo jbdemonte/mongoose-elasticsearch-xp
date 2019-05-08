@@ -1,8 +1,8 @@
 'use strict';
 
-const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const utils = require('../utils');
+const plugin = require('../../');
 
 describe('document-hook', () => {
   utils.setup();
@@ -253,7 +253,7 @@ describe('document-hook', () => {
                 body: { query: { match_all: {} } },
               },
               (err, resp) => {
-                expect(resp.hits.total).to.eql(1);
+                expect(resp.hits.total.value).to.eql(1);
                 const hit = resp.hits.hits[0];
                 expect(hit._id).to.eql(henry._id.toString());
                 expect(hit._source).to.eql({ name: 'Henry', age: 85 });
@@ -753,7 +753,7 @@ describe('document-hook', () => {
       );
   });
 
-  it('should handle FindOneAndUpdate', () => {
+  it.only('should handle FindOneAndUpdate', () => {
     let UserSchema = new mongoose.Schema({
       name: String,
       age: Number,
@@ -868,7 +868,7 @@ describe('document-hook', () => {
                 body: { query: { match_all: {} } },
               },
               (err, resp) => {
-                expect(resp.hits.total).to.eql(0);
+                expect(resp.hits.total.value).to.eql(0);
                 resolve();
               }
             );
@@ -901,7 +901,7 @@ describe('document-hook', () => {
                 body: { query: { match_all: {} } },
               },
               (err, resp) => {
-                expect(resp.hits.total).to.eql(1);
+                expect(resp.hits.total.value).to.eql(1);
                 const hit = resp.hits.hits[0];
                 expect(hit._id).to.eql(henry._id.toString());
                 expect(hit._source).to.eql({ name: 'Henry', age: 35 });

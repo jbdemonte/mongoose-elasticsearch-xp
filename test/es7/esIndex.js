@@ -2,7 +2,7 @@
 
 const utils = require('../utils');
 const mongoose = require('mongoose');
-const plugin = require('../../').v5;;
+const plugin = require('../../');
 
 describe('esIndex', () => {
   utils.setup();
@@ -45,7 +45,7 @@ describe('esIndex', () => {
         });
       })
       .then(resp => {
-        expect(resp.hits.total).to.eql(1);
+        expect(resp.hits.total.value).to.eql(1);
         const hit = resp.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
@@ -106,7 +106,7 @@ describe('esIndex', () => {
         });
       })
       .then(resp => {
-        expect(resp.hits.total).to.eql(1);
+        expect(resp.hits.total.value).to.eql(1);
         const hit = resp.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({

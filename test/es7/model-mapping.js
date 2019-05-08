@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 const utils = require('../utils');
-const plugin = require('../../').v5;
+const plugin = require('../../');
 
 describe('model-mapping', () => {
   utils.setup();
@@ -14,27 +14,29 @@ describe('model-mapping', () => {
 
     UserSchema.plugin(plugin, {
       mappingSettings: {
-        analysis: {
-          filter: {
-            elision: {
-              type: 'elision',
-              articles: ['l', 'm', 't', 'qu', 'n', 's', 'j', 'd'],
+        settings: {
+          analysis: {
+            filter: {
+              elision: {
+                type: 'elision',
+                articles: ['l', 'm', 't', 'qu', 'n', 's', 'j', 'd'],
+              },
             },
-          },
-          analyzer: {
-            custom_french_analyzer: {
-              tokenizer: 'letter',
-              filter: [
-                'asciifolding',
-                'lowercase',
-                'french_stem',
-                'elision',
-                'stop',
-              ],
-            },
-            tag_analyzer: {
-              tokenizer: 'keyword',
-              filter: ['asciifolding', 'lowercase'],
+            analyzer: {
+              custom_french_analyzer: {
+                tokenizer: 'letter',
+                filter: [
+                  'asciifolding',
+                  'lowercase',
+                  'french_stem',
+                  'elision',
+                  'stop',
+                ],
+              },
+              tag_analyzer: {
+                tokenizer: 'keyword',
+                filter: ['asciifolding', 'lowercase'],
+              },
             },
           },
         },
@@ -82,6 +84,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -106,27 +109,29 @@ describe('model-mapping', () => {
       .deleteModelIndexes(UserModel)
       .then(() => {
         return UserModel.esCreateMapping({
-          analysis: {
-            filter: {
-              elision: {
-                type: 'elision',
-                articles: ['l', 'm', 't', 'qu', 'n', 's', 'j', 'd'],
+          settings: {
+            analysis: {
+              filter: {
+                elision: {
+                  type: 'elision',
+                  articles: ['l', 'm', 't', 'qu', 'n', 's', 'j', 'd'],
+                },
               },
-            },
-            analyzer: {
-              custom_french_analyzer: {
-                tokenizer: 'letter',
-                filter: [
-                  'asciifolding',
-                  'lowercase',
-                  'french_stem',
-                  'elision',
-                  'stop',
-                ],
-              },
-              tag_analyzer: {
-                tokenizer: 'keyword',
-                filter: ['asciifolding', 'lowercase'],
+              analyzer: {
+                custom_french_analyzer: {
+                  tokenizer: 'letter',
+                  filter: [
+                    'asciifolding',
+                    'lowercase',
+                    'french_stem',
+                    'elision',
+                    'stop',
+                  ],
+                },
+                tag_analyzer: {
+                  tokenizer: 'keyword',
+                  filter: ['asciifolding', 'lowercase'],
+                },
               },
             },
           },
@@ -166,6 +171,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -215,6 +221,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -231,14 +238,14 @@ describe('model-mapping', () => {
           'embedded'
         );
         expect(properties.name.type).to.be.equal('text');
-        expect(properties.age.type).to.be.equal('double');
+        expect(properties.age.type).to.be.equal('long');
         expect(properties.joined.type).to.be.equal('date');
         expect(properties.tags.type).to.be.equal('text');
         expect(properties.optin.type).to.be.equal('boolean');
 
         expect(properties.plain.properties).to.have.all.keys('x', 'y', 'z');
         expect(properties.plain.properties.x.type).to.be.equal('text');
-        expect(properties.plain.properties.y.type).to.be.equal('double');
+        expect(properties.plain.properties.y.type).to.be.equal('long');
         expect(properties.plain.properties.z.type).to.be.equal('boolean');
 
         expect(properties.embedded.properties).to.have.all.keys('deep', 'key');
@@ -249,7 +256,7 @@ describe('model-mapping', () => {
         );
         expect(
           properties.embedded.properties.deep.properties.dn.type
-        ).to.be.equal('double');
+        ).to.be.equal('long');
       });
   });
 
@@ -300,6 +307,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -323,7 +331,7 @@ describe('model-mapping', () => {
         ).to.have.all.keys('dn');
         expect(
           properties.embedded2.properties.deep1.properties.dn.type
-        ).to.be.equal('double');
+        ).to.be.equal('long');
       });
   });
 
@@ -352,6 +360,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -400,6 +409,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = GroupModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -453,7 +463,7 @@ describe('model-mapping', () => {
             },
           },
         }).then(result => {
-          expect(result.hits.total).to.eql(0);
+          expect(result.hits.total.value).to.eql(0);
         });
       })
       .then(() => {
@@ -472,7 +482,7 @@ describe('model-mapping', () => {
             },
           },
         }).then(result => {
-          expect(result.hits.total).to.eql(1);
+          expect(result.hits.total.value).to.eql(1);
           expect(result.hits.hits[0]._source).to.eql({
             group: 'fans',
             user: [
@@ -558,6 +568,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -634,7 +645,7 @@ describe('model-mapping', () => {
         });
       })
       .then(result => {
-        expect(result.hits.total).to.eql(1);
+        expect(result.hits.total.value).to.eql(1);
         expect(result.hits.hits[0]._source).to.eql({
           first: 'Maurice',
           last: 'Moss',
@@ -692,6 +703,7 @@ describe('model-mapping', () => {
       .then(() => {
         const options = UserModel.esOptions();
         return options.client.indices.getMapping({
+          include_type_name: true,
           index: options.index,
           type: options.type,
         });
@@ -737,7 +749,7 @@ describe('model-mapping', () => {
         });
       })
       .then(result => {
-        expect(result.hits.total).to.eql(1);
+        expect(result.hits.total.value).to.eql(1);
         expect(result.hits.hits[0]._source).to.eql({
           first: 'Maurice',
           last: 'Moss',
@@ -861,7 +873,7 @@ describe('model-mapping', () => {
         });
       })
       .then(result => {
-        expect(result.hits.total).to.eql(1);
+        expect(result.hits.total.value).to.eql(1);
         expect(result.hits.hits[0]._source).to.eql({
           first: 'Maurice',
           last: 'Moss',
