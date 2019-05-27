@@ -88,6 +88,7 @@ Options are:
 * `protocol` - the protocol the Elasticsearch server uses. Defaults to http.
 * `hydrate` - whether or not to replace ES source by mongo document.
 * `filter` - the function used for filtered indexing.
+* `transform` - the function used for transforming a document before indexing it, accepts the document as an argument, expects transformed document to be returned (if returned value is falsy, the original document will be used).
 * `idsOnly` - whether or not returning only mongo ids in `esSearch`.
 * `countOnly` - whether or not returning only the count value in `esCount`.
 * `mappingSettings` - default settings to use with `esCreateMapping`.
@@ -98,7 +99,6 @@ Options are:
 * `bulk.size` - bulk element count to wait before calling `client.bulk` function. Defaults to 1000.
 * `bulk.delay` - idle time to wait before calling the `client.bulk` function. Defaults to 1000.
 * `onlyOnDemandIndexing` - whether or not to demand indexing on CRUD operations. If set to true middleware hooks for save, update, delete do not fire. Defaults to false.
-
 
 To have a model indexed into Elasticsearch simply add the plugin.
 
@@ -374,6 +374,24 @@ var MovieSchema = new mongoose.Schema({
 MovieSchema.plugin(mexp, {
   filter: function (doc) {
     return doc.genre === 'action';
+  }
+});
+```
+
+### Transforming a document before indexing
+
+You can specify a function to transform a document before indexing it in ElasticSearch.
+
+```javascript
+var MovieSchema = new mongoose.Schema({
+  title: {type: String},
+  genre: {type: String, enum: ['horror', 'action', 'adventure', 'other']}
+});
+
+MovieSchema.plugin(mexp, {
+  transform: function (doc) {
+    delete doc.genre;
+    return doc;
   }
 });
 ```

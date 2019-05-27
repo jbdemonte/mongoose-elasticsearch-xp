@@ -17,12 +17,23 @@ describe('esIndex', () => {
         es_type: 'geo_point',
         es_boost: 1.5,
       },
+      doNotIndexMe: Boolean,
     });
 
-    UserSchema.plugin(plugin);
+    UserSchema.plugin(plugin, {
+      transform: document => {
+        delete document.doNotIndexMe;
+        return document;
+      },
+    });
     const UserModel = mongoose.model('User', UserSchema);
 
-    const john = new UserModel({ name: 'John', age: 35, pos: [5.7333, 43.5] });
+    const john = new UserModel({
+      name: 'John',
+      age: 35,
+      pos: [5.7333, 43.5],
+      doNotIndexMe: true,
+    });
 
     return utils
       .deleteModelIndexes(UserModel)
