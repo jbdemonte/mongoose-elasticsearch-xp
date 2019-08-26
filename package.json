@@ -52,17 +52,17 @@
     "coveralls": "^3.0.3",
     "cz-conventional-changelog": "^2.1.0",
     "elasticsearch": "^16.0.0",
-    "eslint": "^5.16.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-config-prettier": "^4.2.0",
+    "eslint": "^6.2.2",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-chai-expect": "^2.0.1",
-    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-prettier": "^3.0.1",
     "mocha": "^6.1.4",
     "nyc": "^14.1.0",
     "prettier": "^1.17.0",
     "semantic-release": "^15.13.3",
-    "shortid": "^2.2.8"
+    "shortid": "^2.2.14"
   },
   "config": {
     "commitizen": {
