@@ -11,13 +11,20 @@ function array(mixed) {
 function setup() {
   before(done => {
     global.expect = require('chai').expect; // eslint-disable-line
-    mongoose.connect('mongodb://localhost/test', err => {
-      if (err) {
-        done(err);
-      } else {
-        done();
+    mongoose.connect(
+      'mongodb://localhost/test',
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      },
+      err => {
+        if (err) {
+          done(err);
+        } else {
+          done();
+        }
       }
-    });
+    );
   });
 
   beforeEach(() => {

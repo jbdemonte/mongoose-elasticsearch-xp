@@ -74,8 +74,8 @@ describe('esRemove', () => {
           body: { query: { match_all: {} } },
         });
       })
-      .then(resp => {
-        const ids = resp.hits.hits.map(hit => {
+      .then(({ body }) => {
+        const ids = body.hits.hits.map(hit => {
           return hit._id;
         });
         ids.sort();
