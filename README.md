@@ -35,7 +35,7 @@ This plugin is compatible with Elasticsearch version 2,5,6 and 7.
 mongoose-elasticsearch-xp requires:
 
   - mongoose 4.9.0, 5.0.0 or later
-  - elasticsearch 2.0, 5.0, 6.0, 7.0 or later
+  - @elastic/elasticsearch 7.0 or later
 
 ## Why this plugin?
 
@@ -170,7 +170,7 @@ User
       }
     }
   })
-  .then(function (results) {
+  .then(function ({ body }) {
     // results here
   });
 ```
@@ -198,7 +198,7 @@ MyModel.plugin(mexp, {
 Also, you can re-use an existing Elasticsearch `Client` instance
 
 ```javascript
-var esClient = new elasticsearch.Client({host: 'localhost: 9200'});
+var esClient = new Client({node: 'http://localhost:9200'});
 
 MyModel.plugin(mexp, {
   client: esClient
@@ -615,7 +615,7 @@ Person
       }
     }
   })
-  .then(function (results) {
+  .then(function ({ body }) {
     // all the people who fit the age group are here!
   });
 
