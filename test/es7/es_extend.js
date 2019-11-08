@@ -52,8 +52,8 @@ describe('es_extend', () => {
           type: options.type,
         });
       })
-      .then(mapping => {
-        const properties = mapping.users.mappings.user.properties;
+      .then(({ body }) => {
+        const properties = body.users.mappings.user.properties;
         expect(properties).to.have.all.keys('name', 'num', 'length');
         expect(properties.name.type).to.be.equal('text');
         expect(properties.num.type).to.be.equal('integer');

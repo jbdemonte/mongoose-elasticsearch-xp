@@ -100,9 +100,9 @@ describe('es_value', () => {
           body: { query: { match_all: {} } },
         });
       })
-      .then(resp => {
-        expect(resp.hits.total.value).to.eql(1);
-        const hit = resp.hits.hits[0];
+      .then(({ body }) => {
+        expect(body.hits.total.value).to.eql(1);
+        const hit = body.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
           name: 'John',
@@ -181,9 +181,9 @@ describe('es_value', () => {
           },
         });
       })
-      .then(resp => {
-        expect(resp.hits.total.value).to.eql(2);
-        let hit = resp.hits.hits[0];
+      .then(({ body }) => {
+        expect(body.hits.total.value).to.eql(2);
+        let hit = body.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
           name: 'John',
@@ -195,7 +195,7 @@ describe('es_value', () => {
             b: 123,
           },
         });
-        hit = resp.hits.hits[1];
+        hit = body.hits.hits[1];
         expect(hit._id).to.eql(bob._id.toString());
         expect(hit._source).to.eql({
           name: 'Bob',

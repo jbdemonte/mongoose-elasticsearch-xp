@@ -55,9 +55,9 @@ describe('esIndex', () => {
           body: { query: { match_all: {} } },
         });
       })
-      .then(resp => {
-        expect(resp.hits.total.value).to.eql(1);
-        const hit = resp.hits.hits[0];
+      .then(({ body }) => {
+        expect(body.hits.total.value).to.eql(1);
+        const hit = body.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
           name: 'John',
@@ -116,9 +116,9 @@ describe('esIndex', () => {
           body: { query: { match_all: {} } },
         });
       })
-      .then(resp => {
-        expect(resp.hits.total.value).to.eql(1);
-        const hit = resp.hits.hits[0];
+      .then(({ body }) => {
+        expect(body.hits.total.value).to.eql(1);
+        const hit = body.hits.hits[0];
         expect(hit._id).to.eql(john._id.toString());
         expect(hit._source).to.eql({
           name: 'John',
