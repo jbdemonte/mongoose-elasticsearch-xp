@@ -61,7 +61,7 @@
     "mocha": "^6.1.4",
     "nyc": "^14.1.0",
     "prettier": "^1.17.0",
-    "semantic-release": "^15.13.3",
+    "semantic-release": "^17.2.3",
     "shortid": "^2.2.8"
   },
   "config": {
